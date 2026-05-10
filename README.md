@@ -1,36 +1,58 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Work Together Frontend
 
-## Getting Started
+Frontend application built with Next.js, React, and TypeScript.
 
-First, run the development server:
+## Requirements
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+- Node.js 20+
+- npm 10+
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Setup
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+1. Install dependencies:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+   ```bash
+   npm ci
+   ```
 
-## Learn More
+2. Create `.env.local` based on `.env.example`.
 
-To learn more about Next.js, take a look at the following resources:
+3. Update required env vars in `.env.local`.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+4. Start development server:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+   ```bash
+   npm run dev
+   ```
 
-## Deploy on Vercel
+## Environment Variables
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Required:
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- `NEXT_PUBLIC_API_URL` - base URL for backend API (example: `http://localhost:3001`).
+
+## Scripts
+
+- `npm run dev` - run local dev server.
+- `npm run build` - build production app.
+- `npm run start` - run production server.
+- `npm run lint` - run ESLint.
+- `npm run lint:fix` - auto-fix lint issues where possible.
+- `npm run typecheck` - run TypeScript checks.
+- `npm run format` - format files with Prettier.
+- `npm run format:check` - validate formatting without changes.
+- `npm run check` - run lint, typecheck, and format:check.
+- `npm run commit` - create conventional commit message via Commitizen.
+
+## Quality Gates
+
+- Pre-commit hook runs `lint-staged` on staged files (format + eslint fix).
+- Commit message hook validates conventional commits via commitlint.
+- CI validates `lint`, `typecheck`, and `build` on pushes and pull requests.
+
+## Team Workflow
+
+1. Create or update `.env.local` from `.env.example`.
+2. Run `npm run dev` during development.
+3. Before pushing, run `npm run check`.
+4. Use `npm run commit` to keep commit messages consistent.
