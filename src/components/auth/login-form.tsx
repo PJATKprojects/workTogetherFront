@@ -1,7 +1,11 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useId, useState } from "react";
+
+import { useAuth } from "@/hooks/use-auth";
+import { authService } from "@/services/authService";
 
 export type LoginFormLabels = Readonly<{
   emailLabel: string;
@@ -15,9 +19,11 @@ export type LoginFormLabels = Readonly<{
   divider: string;
   google: string;
   github: string;
-  oauthSoon: string;
   noAccount: string;
   signUpCta: string;
+  submitting: string;
+  invalidCredentials: string;
+  genericError: string;
 }>;
 
 type Props = Readonly<{
@@ -25,28 +31,59 @@ type Props = Readonly<{
   localePrefix: string;
   /** Tighter spacing for viewport-constrained layouts (e.g. login split screen). */
   compact?: boolean;
+  returnUrl?: string;
 }>;
 
 const inputShell =
-  "w-full rounded-xl border border-zinc-200/90 bg-white text-zinc-900 shadow-inner outline-none transition-[border-color,box-shadow] duration-200 placeholder:text-zinc-400 focus-visible:border-indigo-500 focus-visible:shadow-[0_0_0_3px_rgb(99_102_241/0.22)] dark:border-white/[0.08] dark:bg-zinc-950/55 dark:text-zinc-50 dark:placeholder:text-zinc-500 dark:focus-visible:border-teal-400/90 dark:focus-visible:shadow-[0_0_0_3px_rgb(45_212_191/0.18)]";
+  "w-full rounded-xl border border-input bg-surface text-foreground shadow-[var(--shadow-sm)] outline-none transition-[border-color,box-shadow,background-color,transform] duration-300 placeholder:text-muted-foreground/70 hover:border-primary/40 focus-visible:-translate-y-px focus-visible:border-primary focus-visible:shadow-[0_0_0_3px_rgb(37_99_235/0.16),0_14px_28px_-18px_rgb(37_99_235/0.3)]";
 
-const labelCls =
-  "text-[0.65rem] font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400";
+const labelCls = "text-[0.76rem] font-medium tracking-tight text-muted-foreground";
 
-export function LoginForm({ labels, localePrefix, compact = false }: Props) {
+export function LoginForm({ labels, localePrefix, compact = false, returnUrl }: Props) {
   const [visible, setVisible] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [submitError, setSubmitError] = useState("");
+  const router = useRouter();
+  const { login } = useAuth();
   const emailId = useId();
   const passwordId = useId();
 
-  const h = compact ? "h-10 text-sm" : "h-12 text-base";
+  const h = compact ? "h-11 text-sm" : "h-12 text-base";
   const pxIcon = compact ? "pl-9" : "pl-10";
+
+  const startOAuth = (provider: "google" | "github") => {
+    window.location.assign(authService.oauthStartUrl(provider, returnUrl || `${localePrefix}/`));
+  };
+
+  const onSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSubmitError("");
+    setLoading(true);
+    try {
+      await login(email.trim(), password);
+      router.push(returnUrl || `${localePrefix}/`);
+      router.refresh();
+    } catch (error) {
+      const message = authService.getApiErrorMessage(error, labels.genericError);
+      const normalized = message.toLowerCase();
+      if (normalized.includes("invalid") || normalized.includes("credential")) {
+        setSubmitError(labels.invalidCredentials);
+      } else {
+        setSubmitError(message);
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <form
       action="#"
       method="post"
       className={`flex w-full flex-col ${compact ? "gap-4" : "gap-6"}`}
-      onSubmit={(e) => e.preventDefault()}
+      onSubmit={onSubmit}
     >
       <div className={`flex flex-col ${compact ? "gap-1.5" : "gap-2"}`}>
         <label htmlFor={emailId} className={labelCls}>
@@ -54,7 +91,7 @@ export function LoginForm({ labels, localePrefix, compact = false }: Props) {
         </label>
         <div className="group relative">
           <span
-            className={`pointer-events-none absolute left-2.5 top-1/2 z-[1] -translate-y-1/2 text-zinc-400 transition-colors group-focus-within:text-indigo-500 dark:left-3 dark:text-zinc-500 dark:group-focus-within:text-teal-400 ${compact ? "scale-90" : ""}`}
+            className={`pointer-events-none absolute left-2.5 top-1/2 z-[1] -translate-y-1/2 text-muted-foreground/70 transition-colors group-focus-within:text-primary-text dark:left-3 ${compact ? "scale-90" : ""}`}
           >
             <MailIcon compact={compact} />
           </span>
@@ -64,6 +101,8 @@ export function LoginForm({ labels, localePrefix, compact = false }: Props) {
             type="email"
             autoComplete="email"
             required
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
             placeholder={labels.emailPlaceholder}
             className={`${inputShell} ${h} ${pxIcon} ${compact ? "pr-3" : "pr-4"}`}
           />
@@ -76,7 +115,7 @@ export function LoginForm({ labels, localePrefix, compact = false }: Props) {
         </label>
         <div className="group relative">
           <span
-            className={`pointer-events-none absolute left-2.5 top-1/2 z-[1] -translate-y-1/2 text-zinc-400 transition-colors group-focus-within:text-indigo-500 dark:left-3 dark:text-zinc-500 dark:group-focus-within:text-teal-400 ${compact ? "scale-90" : ""}`}
+            className={`pointer-events-none absolute left-2.5 top-1/2 z-[1] -translate-y-1/2 text-muted-foreground/70 transition-colors group-focus-within:text-primary-text dark:left-3 ${compact ? "scale-90" : ""}`}
           >
             <LockIcon compact={compact} />
           </span>
@@ -86,6 +125,8 @@ export function LoginForm({ labels, localePrefix, compact = false }: Props) {
             type={visible ? "text" : "password"}
             autoComplete="current-password"
             required
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
             placeholder={labels.passwordPlaceholder}
             className={`${inputShell} ${h} ${pxIcon} ${compact ? "pr-10" : "pr-12"}`}
           />
@@ -95,7 +136,7 @@ export function LoginForm({ labels, localePrefix, compact = false }: Props) {
             aria-label={visible ? labels.hidePassword : labels.showPassword}
             title={visible ? labels.hidePassword : labels.showPassword}
             onClick={() => setVisible((v) => !v)}
-            className={`absolute right-1 top-1/2 flex -translate-y-1/2 items-center justify-center rounded-lg text-zinc-500 outline-none transition hover:bg-zinc-100 hover:text-zinc-800 focus-visible:ring-2 focus-visible:ring-indigo-500/40 dark:text-zinc-400 dark:hover:bg-white/[0.06] dark:hover:text-zinc-100 dark:focus-visible:ring-teal-400/35 ${
+            className={`absolute right-1 top-1/2 flex -translate-y-1/2 items-center justify-center cursor-pointer rounded-lg text-muted-foreground outline-none transition hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-[var(--ring)]/40 ${
               compact ? "size-8" : "size-10"
             }`}
           >
@@ -105,7 +146,7 @@ export function LoginForm({ labels, localePrefix, compact = false }: Props) {
         <div className="text-right">
           <Link
             href={`${localePrefix}/auth/forgot-password`}
-            className={`font-medium text-zinc-500 underline-offset-2 transition-colors hover:text-teal-600 dark:text-zinc-400 dark:hover:text-teal-400 ${
+            className={`font-medium text-muted-foreground underline-offset-2 transition-colors hover:text-primary-text ${
               compact ? "text-xs" : "text-sm"
             }`}
           >
@@ -116,27 +157,32 @@ export function LoginForm({ labels, localePrefix, compact = false }: Props) {
 
       <button
         type="submit"
-        className={`rounded-2xl bg-linear-to-r from-indigo-600 to-violet-600 px-4 font-semibold text-white shadow-[0_20px_60px_-20px_rgb(99_102_241/0.58)] transition-[transform,filter,box-shadow] duration-200 hover:-translate-y-px hover:brightness-[1.04] motion-reduce:hover:translate-y-0 active:translate-y-0 sm:hover:shadow-[0_22px_64px_-18px_rgb(99_102_241/0.62)] ${
+        disabled={loading}
+        className={`cursor-pointer rounded-xl bg-linear-to-r from-primary to-secondary px-4 font-semibold text-primary-foreground shadow-[0_18px_44px_-18px_rgb(37_99_235/0.6)] transition-[transform,filter,box-shadow] duration-200 hover:scale-[1.01] hover:brightness-110 hover:shadow-[0_20px_48px_-14px_rgb(37_99_235/0.7)] focus-visible:outline-none focus-visible:shadow-[0_0_0_3px_rgb(37_99_235/0.25),0_20px_48px_-14px_rgb(37_99_235/0.7)] motion-reduce:hover:scale-100 active:scale-100 disabled:cursor-not-allowed disabled:opacity-70 ${
           compact ? "h-10 text-sm" : "h-12 text-base"
         }`}
       >
-        {labels.submit}
+        {loading ? labels.submitting : labels.submit}
       </button>
+      {submitError ? (
+        <p role="alert" className={`text-destructive ${compact ? "text-xs" : "text-sm"}`}>
+          {submitError}
+        </p>
+      ) : null}
 
       <div className={`relative flex items-center ${compact ? "gap-2 py-0" : "gap-4 py-1"}`}>
-        <span className="h-px flex-1 bg-zinc-200 dark:bg-zinc-700/80" />
-        <span className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400 sm:text-[11px]">
+        <span className="h-px flex-1 bg-border" />
+        <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/80 sm:text-[11px]">
           {labels.divider}
         </span>
-        <span className="h-px flex-1 bg-zinc-200 dark:bg-zinc-700/80" />
+        <span className="h-px flex-1 bg-border" />
       </div>
 
       <div className={`grid grid-cols-2 ${compact ? "gap-2" : "gap-3"}`}>
         <button
           type="button"
-          disabled
-          title={labels.oauthSoon}
-          className={`flex items-center justify-center gap-2 rounded-xl border border-zinc-200/75 bg-zinc-950/[0.035] font-semibold text-zinc-700 transition-[transform,background-color] duration-200 hover:-translate-y-px hover:bg-zinc-950/[0.065] disabled:cursor-not-allowed disabled:hover:translate-y-0 dark:border-white/[0.08] dark:bg-white/[0.03] dark:text-zinc-200 dark:hover:bg-white/[0.06] motion-reduce:hover:translate-y-0 ${
+          onClick={() => startOAuth("google")}
+          className={`focus-ring flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-border bg-surface-muted font-semibold text-foreground/80 transition-[transform,background-color,border-color] duration-200 hover:-translate-y-px hover:border-input hover:bg-muted motion-reduce:hover:translate-y-0 ${
             compact ? "h-9 text-xs" : "h-11 text-sm"
           }`}
         >
@@ -145,9 +191,8 @@ export function LoginForm({ labels, localePrefix, compact = false }: Props) {
         </button>
         <button
           type="button"
-          disabled
-          title={labels.oauthSoon}
-          className={`flex items-center justify-center gap-2 rounded-xl border border-zinc-200/75 bg-zinc-950/[0.035] font-semibold text-zinc-700 transition-[transform,background-color] duration-200 hover:-translate-y-px hover:bg-zinc-950/[0.065] disabled:cursor-not-allowed disabled:hover:translate-y-0 dark:border-white/[0.08] dark:bg-white/[0.03] dark:text-zinc-200 dark:hover:bg-white/[0.06] motion-reduce:hover:translate-y-0 ${
+          onClick={() => startOAuth("github")}
+          className={`focus-ring flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-border bg-surface-muted font-semibold text-foreground/80 transition-[transform,background-color,border-color] duration-200 hover:-translate-y-px hover:border-input hover:bg-muted motion-reduce:hover:translate-y-0 ${
             compact ? "h-9 text-xs" : "h-11 text-sm"
           }`}
         >
@@ -156,13 +201,11 @@ export function LoginForm({ labels, localePrefix, compact = false }: Props) {
         </button>
       </div>
 
-      <p
-        className={`text-center text-zinc-600 dark:text-zinc-400 ${compact ? "text-xs" : "text-sm"}`}
-      >
+      <p className={`text-center text-muted-foreground ${compact ? "text-xs" : "text-sm"}`}>
         {labels.noAccount}{" "}
         <Link
           href={`${localePrefix}/auth/register`}
-          className="font-semibold text-teal-600 underline-offset-2 transition-colors hover:text-teal-700 hover:underline dark:text-teal-400 dark:hover:text-teal-300"
+          className="font-semibold text-primary-text underline-offset-2 transition-colors hover:underline"
         >
           {labels.signUpCta}
         </Link>
@@ -276,7 +319,7 @@ function EyeOffIcon({ compact = false }: Readonly<{ compact?: boolean }>) {
 function GithubGlyph({ compact = false }: Readonly<{ compact?: boolean }>) {
   return (
     <svg
-      className={`${compact ? "size-4" : "size-5"} text-zinc-900 dark:text-white`}
+      className={`${compact ? "size-4" : "size-5"} text-foreground`}
       viewBox="0 0 24 24"
       fill="currentColor"
       aria-hidden

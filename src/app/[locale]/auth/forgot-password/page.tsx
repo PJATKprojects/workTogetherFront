@@ -32,15 +32,13 @@ export default async function ForgotPasswordPage({ params }: Props) {
   const F = getMessages(locale).authForgot;
 
   return (
-    <div className="flex min-h-full flex-col items-center justify-center bg-zinc-50 px-6 py-16 dark:bg-zinc-950">
-      <div className="w-full max-w-md rounded-2xl border border-zinc-200 bg-white p-8 shadow-lg dark:border-zinc-800 dark:bg-zinc-900">
-        <h1 className="text-xl font-semibold tracking-tight text-zinc-900 dark:text-white">
-          {F.title}
-        </h1>
-        <p className="mt-3 text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">{F.hint}</p>
+    <div className="flex min-h-full flex-col items-center justify-center px-4 py-10 sm:px-6 sm:py-16">
+      <div className="w-full max-w-md rounded-2xl border border-border bg-surface p-5 shadow-lg sm:p-8">
+        <h1 className="text-xl font-semibold tracking-tight text-foreground">{F.title}</h1>
+        <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{F.hint}</p>
         <Link
           href={withLocale(locale, "/auth/login")}
-          className="mt-6 inline-flex text-sm font-semibold text-indigo-600 underline-offset-2 hover:underline dark:text-indigo-400"
+          className="mt-6 inline-flex text-sm font-semibold text-primary-text underline-offset-2 hover:underline"
         >
           {F.backToLogin}
         </Link>

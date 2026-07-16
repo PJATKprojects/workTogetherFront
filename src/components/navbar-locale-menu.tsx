@@ -78,7 +78,7 @@ export function NavbarLocaleMenu({
         aria-haspopup="listbox"
         aria-label={labels.menuButtonAria}
         onClick={() => setOpen((v) => !v)}
-        className="flex h-9 min-w-[2.75rem] items-center justify-center rounded-full border border-zinc-200 bg-white/90 px-3 text-xs font-semibold tracking-wide text-zinc-800 shadow-sm transition-[background-color,transform] duration-200 ease-out hover:bg-zinc-50 active:scale-[0.97] dark:border-zinc-600 dark:bg-zinc-900/90 dark:text-zinc-100 dark:hover:bg-zinc-800 motion-reduce:transition-none motion-reduce:active:scale-100"
+        className="flex h-9 min-w-[2.75rem] items-center justify-center rounded-full border border-border bg-surface/90 px-3 text-xs font-semibold tracking-wide text-foreground shadow-sm transition-[background-color,transform] duration-200 ease-out hover:bg-muted active:scale-[0.97] motion-reduce:transition-none motion-reduce:active:scale-100"
       >
         {currentShort}
       </button>
@@ -86,7 +86,7 @@ export function NavbarLocaleMenu({
       <ul
         role="listbox"
         aria-hidden={!open}
-        className={`absolute left-1/2 top-full z-[60] mt-1 min-w-full origin-top -translate-x-1/2 overflow-hidden rounded-lg border border-zinc-200 bg-white py-0.5 shadow-md transition-[opacity,transform] duration-200 ease-out motion-reduce:transition-none dark:border-zinc-700 dark:bg-zinc-900 ${
+        className={`absolute left-1/2 top-full z-[60] mt-1 min-w-full origin-top -translate-x-1/2 overflow-hidden rounded-lg border border-border bg-surface py-0.5 shadow-md transition-[opacity,transform] duration-200 ease-out motion-reduce:transition-none ${
           open
             ? "translate-y-0 scale-100 opacity-100"
             : "pointer-events-none -translate-y-1.5 scale-[0.96] opacity-0"
@@ -101,11 +101,9 @@ export function NavbarLocaleMenu({
               tabIndex={open ? 0 : -1}
               href={hrefForLocaleFromPathname(pathname, item.code)}
               onClick={() => close()}
-              className={`flex min-w-[3.25rem] items-center justify-center px-3 py-2 text-xs font-semibold tracking-wide transition-colors duration-150 ${
-                locale === item.code
-                  ? "bg-zinc-100 text-zinc-900 dark:bg-zinc-800 dark:text-white"
-                  : "text-zinc-700 dark:text-zinc-200"
-              } hover:bg-zinc-100 dark:hover:bg-zinc-800`}
+              className={`flex min-h-10 min-w-[3.25rem] items-center justify-center px-3 py-2 text-xs font-semibold tracking-wide transition-colors duration-150 ${
+                locale === item.code ? "bg-muted text-foreground" : "text-foreground/80"
+              } hover:bg-muted`}
             >
               {item.short}
             </Link>

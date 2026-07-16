@@ -1,24 +1,56 @@
-import { Technology } from "./index";
+import type { PaginationParams } from "./Common";
 
-export interface User {
-  id: number;
-  userName: string;
-  userNickname: string;
-  userDescription: string;
-  userEmail: string;
-  cv?: string; // Optional if not uploaded
-  createdAt: string; // ISO Date string from C#
-  isLookingForTeam: boolean;
-  linkedInProfile?: string;
-  githubProfile?: string;
-  isConfirmed: boolean;
-  isActive: boolean;
-  // Navigation properties
-  userTechnologies?: UserTechnology[];
+/** Social handle (v1.3): type is one of SOCIAL_NETWORKS ids, handle without "@". */
+export interface SocialLink {
+  type: string;
+  handle: string;
 }
 
-export interface UserTechnology {
-  userId: number;
-  technologyId: number;
-  technology?: Technology;
+export interface PublicUser {
+  id: number;
+  userName: string;
+  userDescription: string;
+  /** Uploaded file ("/api/files/…") or absolute provider URL; "" when unset. */
+  avatarUrl: string;
+  githubProfile: string;
+  linkedInProfile: string;
+  isLookingForTeam: boolean;
+  isConfirmed: boolean;
+  isActive: boolean;
+  createdAt: string;
+  technologies: string[];
+  socialLinks: SocialLink[];
+}
+
+export interface PrivateUser extends PublicUser {
+  userEmail: string;
+  cv: string;
+}
+
+export interface UserListItem {
+  id: number;
+  userName: string;
+  userDescription: string;
+  avatarUrl: string;
+  githubProfile: string;
+  isLookingForTeam: boolean;
+  technologies: string[];
+}
+
+export interface UpdateUserProfileDto {
+  userName: string;
+  userDescription: string;
+  avatarUrl: string;
+  githubProfile: string;
+  linkedInProfile: string;
+  cv: string;
+  isLookingForTeam: boolean;
+  technologyIds: number[];
+  socialLinks: SocialLink[];
+}
+
+export interface UserFilters extends PaginationParams {
+  search?: string;
+  technologyIds?: number[];
+  isLookingForTeam?: boolean;
 }

@@ -22,7 +22,7 @@ A concise overview of how the frontend is structured and how to change it safely
 
 - Supported locales: **`en`** (default site language), **`uk`**.
 - User-facing routes live under **`/en/...`** and **`/uk/...`**.
-- **`src/middleware.ts`**: paths without a locale prefix redirect to **`/en`** + the same path (`defaultLocale`).
+- **`src/proxy.ts`**: paths without a locale prefix redirect to **`/en`** + the same path (`defaultLocale`).
 
 ### Where copy lives
 
@@ -51,7 +51,7 @@ A concise overview of how the frontend is structured and how to change it safely
 
 1. Add the code in **`src/i18n/locales.ts`** and **`src/i18n/config.ts`** (message catalog).
 2. Add **`src/messages/{code}.ts`** mirroring `en.ts`.
-3. **`src/middleware.ts`** picks up new locales via `isLocale` automatically once `locales` is updated.
+3. **`src/proxy.ts`** picks up new locales via `isLocale` automatically once `locales` is updated.
 4. In **`navbar-locale-menu.tsx`**, extend **`localeMenuCodes`** and **`localeShort`** / aria branches.
 5. In **`LocaleHtmlAttributes`**, map `document.documentElement.lang` for the new locale.
 

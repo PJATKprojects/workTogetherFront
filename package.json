@@ -13,28 +13,34 @@
     "format": "prettier . --write",
     "format:check": "prettier . --check",
     "check": "npm run lint && npm run typecheck && npm run format:check",
-    "prepare": "husky",
-    "commit": "cz"
+    "prepare": "husky"
   },
   "dependencies": {
-    "axios": "^1.16.0",
-    "next": "16.2.6",
+    "@tanstack/query-sync-storage-persister": "^5.100.9",
+    "@tanstack/react-query": "^5.100.9",
+    "@tanstack/react-query-persist-client": "^5.100.9",
+    "@tiptap/extension-image": "^3.28.0",
+    "@tiptap/extension-placeholder": "^3.28.0",
+    "@tiptap/extension-text-align": "^3.28.0",
+    "@tiptap/pm": "^3.28.0",
+    "@tiptap/react": "^3.28.0",
+    "@tiptap/starter-kit": "^3.28.0",
+    "axios": "^1.18.1",
+    "framer-motion": "^12.42.2",
+    "isomorphic-dompurify": "^3.18.0",
+    "next": "16.2.10",
     "next-themes": "^0.4.6",
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "zod": "^4.4.3"
   },
   "devDependencies": {
-    "@commitlint/cli": "^21.0.0",
-    "@commitlint/config-conventional": "^21.0.0",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "commitizen": "^4.3.1",
-    "cz-conventional-changelog": "^3.3.0",
     "eslint": "^9",
-    "eslint-config-next": "16.2.6",
+    "eslint-config-next": "16.2.10",
     "husky": "^9.1.7",
     "lint-staged": "^17.0.4",
     "prettier": "^3.8.3",
@@ -49,9 +55,8 @@
       "eslint --fix"
     ]
   },
-  "config": {
-    "commitizen": {
-      "path": "cz-conventional-changelog"
-    }
+  "overrides": {
+    "form-data": "4.0.6",
+    "postcss": "8.5.10"
   }
 }

@@ -1,19 +1,33 @@
-import { User } from "./User";
-import { ProjectPosition } from "./Project";
+import type { ApplicationStatus, Role } from "./Lookup";
+import type { UserListItem } from "./User";
 
-export interface ApplicationStatus {
+export interface ApplicationDto {
   id: number;
-  name: string; // Pending, Accepted, Rejected
+  appliedAt: string;
+  status: ApplicationStatus;
+  applicant: UserListItem;
+  position: {
+    id: number;
+    role: Role;
+    project: {
+      id: number;
+      projectName: string;
+      ownerId: number;
+      ownerName: string;
+    };
+  };
+  /** Applicant's CV / LinkedIn / GitHub link supplied at apply time. */
+  attachmentUrl: string;
+  /** Optional note from the applicant to the owner (v1.3). */
+  message: string | null;
 }
 
-export interface Application {
-  id: number;
-  userId: number;
+export interface CreateApplicationDto {
   projectPositionId: number;
-  applicationStatusId: number;
-  appliedAt: string;
-  // Navigation
-  applicant?: User;
-  projectPosition?: ProjectPosition;
-  applicationStatus?: ApplicationStatus;
+  attachmentUrl: string;
+  message?: string;
+}
+
+export interface UpdateApplicationStatusDto {
+  statusId: 2 | 3;
 }

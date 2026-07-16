@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
 import { LocaleHtmlAttributes } from "@/components/locale-html-attributes";
+import { AmbientBackground } from "@/components/ui/ambient-background";
+import { ScrollParallaxDriver } from "@/components/ui/scroll-parallax-driver";
 import { getMessages } from "@/i18n/config";
 import { isLocale, locales, type Locale } from "@/i18n/locales";
 
@@ -39,6 +41,8 @@ export default async function LocaleLayout({ children, params }: Props) {
   return (
     <>
       <LocaleHtmlAttributes locale={raw} />
+      <ScrollParallaxDriver />
+      <AmbientBackground />
       {children}
     </>
   );

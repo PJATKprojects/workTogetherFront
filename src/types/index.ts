@@ -1,20 +1,6 @@
-export interface Status {
-  id: number;
-  statusName: string;
-}
-
-export interface Role {
-  id: number;
-  name: string;
-}
-
-export interface Technology {
-  id: number;
-  name: string;
-}
-
-export interface PositionTechnology {
-  projectPositionId: number;
-  technologiesId: number;
-  technology?: Technology;
-}
+export * from "./Application";
+export * from "./Chat";
+export * from "./Common";
+export * from "./Lookup";
+export * from "./Project";
+export * from "./User";
