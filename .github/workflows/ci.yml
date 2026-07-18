@@ -73,6 +73,7 @@ jobs:
   supply-chain:
     runs-on: ubuntu-latest
     permissions:
+      actions: read
       contents: read
       security-events: write
     steps:
@@ -103,7 +104,7 @@ jobs:
       - name: Build production container
         run: docker build -t worktogether-frontend:${{ github.sha }} .
 
-      - name: Scan container
+      - name: Generate container scan report
         uses: aquasecurity/trivy-action@dc5a429b52fcf669ce959baa2c2dd26090d2a6c4 # v0.32.0
         with:
           image-ref: worktogether-frontend:${{ github.sha }}
@@ -111,13 +112,23 @@ jobs:
           output: trivy-frontend.sarif
           severity: HIGH,CRITICAL
           ignore-unfixed: true
-          exit-code: "1"
+          exit-code: "0"
 
       - name: Upload container scan
-        if: always()
-        uses: github/codeql-action/upload-sarif@v3
+        if: ${{ always() && hashFiles('trivy-frontend.sarif') != '' }}
+        uses: github/codeql-action/upload-sarif@7211b7c8077ea37d8641b6271f6a365a22a5fbfa # v4.36.0
         with:
           sarif_file: trivy-frontend.sarif
+          category: trivy-frontend-container
+
+      - name: Enforce container vulnerability gate
+        uses: aquasecurity/trivy-action@dc5a429b52fcf669ce959baa2c2dd26090d2a6c4 # v0.32.0
+        with:
+          image-ref: worktogether-frontend:${{ github.sha }}
+          format: table
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: "1"
 
       - name: Scan repository secrets
         uses: gitleaks/gitleaks-action@v2
