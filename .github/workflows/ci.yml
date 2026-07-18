@@ -104,7 +104,7 @@ jobs:
         run: docker build -t worktogether-frontend:${{ github.sha }} .
 
       - name: Scan container
-        uses: aquasecurity/trivy-action@0.32.0
+        uses: aquasecurity/trivy-action@dc5a429b52fcf669ce959baa2c2dd26090d2a6c4 # v0.32.0
         with:
           image-ref: worktogether-frontend:${{ github.sha }}
           format: sarif
