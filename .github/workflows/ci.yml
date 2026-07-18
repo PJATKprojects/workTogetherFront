@@ -105,9 +105,10 @@ jobs:
         run: docker build -t worktogether-frontend:${{ github.sha }} .
 
       - name: Generate container scan report
-        uses: aquasecurity/trivy-action@dc5a429b52fcf669ce959baa2c2dd26090d2a6c4 # v0.32.0
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
           image-ref: worktogether-frontend:${{ github.sha }}
+          version: v0.70.0
           format: sarif
           output: trivy-frontend.sarif
           severity: HIGH,CRITICAL
@@ -122,9 +123,11 @@ jobs:
           category: trivy-frontend-container
 
       - name: Enforce container vulnerability gate
-        uses: aquasecurity/trivy-action@dc5a429b52fcf669ce959baa2c2dd26090d2a6c4 # v0.32.0
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
           image-ref: worktogether-frontend:${{ github.sha }}
+          version: v0.70.0
+          skip-setup-trivy: true
           format: table
           severity: HIGH,CRITICAL
           ignore-unfixed: true
