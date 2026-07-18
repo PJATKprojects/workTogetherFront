@@ -4,6 +4,7 @@ import { AuthNavActions } from "@/components/auth-nav-actions";
 import { BrandMark } from "@/components/brand/logo";
 import { NavbarLocaleMenu } from "@/components/navbar-locale-menu";
 import { NavbarThemeToggle } from "@/components/navbar-theme-toggle";
+import { SkipLink } from "@/components/ui/skip-link";
 import type { Locale } from "@/i18n/locales";
 import { withLocale } from "@/i18n/paths";
 import type { SiteMessages } from "@/messages/types";
@@ -18,10 +19,12 @@ export function SiteHeader({ locale, nav }: Props) {
     menuButtonAria: nav.localeMenuButtonAria,
     localeEnglishAria: nav.localeEnglishAria,
     localeUkrainianAria: nav.localeUkrainianAria,
+    localePolishAria: nav.localePolishAria,
   };
 
   return (
     <header className="glass-nav sticky top-0 z-50">
+      <SkipLink label={nav.skipToContent} />
       <div className="mx-auto flex h-14 max-w-7xl items-center gap-3 px-4 sm:h-16 sm:gap-5 sm:px-6">
         <div className="relative z-10 flex min-w-0 flex-1 items-center gap-2 xl:flex-none xl:gap-6">
           <Link

@@ -24,6 +24,7 @@ export function DropdownSelect({
 }>) {
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     if (!open) return;
@@ -33,7 +34,10 @@ export function DropdownSelect({
       }
     };
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setOpen(false);
+      if (event.key === "Escape") {
+        setOpen(false);
+        window.requestAnimationFrame(() => triggerRef.current?.focus());
+      }
     };
     document.addEventListener("pointerdown", onPointerDown);
     document.addEventListener("keydown", onKeyDown);
@@ -48,6 +52,7 @@ export function DropdownSelect({
   return (
     <div ref={rootRef} className={`relative ${className}`}>
       <button
+        ref={triggerRef}
         type="button"
         aria-haspopup="listbox"
         aria-expanded={open}
@@ -87,6 +92,7 @@ export function DropdownSelect({
                 onClick={() => {
                   onChange(option.value);
                   setOpen(false);
+                  window.requestAnimationFrame(() => triggerRef.current?.focus());
                 }}
                 className={`flex w-full cursor-pointer items-center justify-between gap-2 rounded-lg px-3 py-2 text-left text-sm transition-colors duration-100 ${
                   active

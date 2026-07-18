@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { Suspense } from "react";
 
 import { OAuthCallbackContent } from "@/components/auth/oauth-callback-content";
+import { SkipLink } from "@/components/ui/skip-link";
 import { getMessages, isLocale } from "@/i18n/config";
 
 type Props = Readonly<{ params: Promise<{ locale: string }> }>;
@@ -22,8 +23,11 @@ export default async function OAuthCallbackPage({ params }: Props) {
 
   return (
     // useSearchParams in the client component requires a Suspense boundary.
-    <Suspense fallback={null}>
-      <OAuthCallbackContent labels={t.authCallback} localePrefix={`/${locale}`} />
-    </Suspense>
+    <>
+      <SkipLink label={t.nav.skipToContent} />
+      <Suspense fallback={null}>
+        <OAuthCallbackContent labels={t.authCallback} localePrefix={`/${locale}`} />
+      </Suspense>
+    </>
   );
 }

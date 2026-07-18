@@ -4,6 +4,7 @@ import { BrandMark } from "@/components/brand/logo";
 import { FooterAccountLinks } from "@/components/footer-account-links";
 import type { Locale } from "@/i18n/locales";
 import { withLocale } from "@/i18n/paths";
+import { getLegalIdentity } from "@/lib/legal-config";
 import type { SiteMessages } from "@/messages/types";
 
 /**
@@ -14,6 +15,7 @@ export function SiteFooter({
   footer,
   locale,
 }: Readonly<{ footer: SiteMessages["footer"]; locale: Locale }>) {
+  const legalIdentity = getLegalIdentity();
   const productLinks = [
     { href: withLocale(locale, "/projects"), label: footer.projects },
     { href: withLocale(locale, "/how-it-works"), label: footer.howItWorks },
@@ -65,7 +67,7 @@ export function SiteFooter({
                 }}
               />
               <a
-                href="mailto:hello@worktogether.app"
+                href={`mailto:${legalIdentity.contactEmail}`}
                 className="w-fit text-muted-foreground transition-colors hover:text-foreground"
               >
                 {footer.contact}
@@ -78,7 +80,13 @@ export function SiteFooter({
           <span>
             © {new Date().getFullYear()} WorkTogether. {footer.rights}
           </span>
-          <div className="flex items-center gap-4">
+          <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 sm:justify-end">
+            <Link
+              href={withLocale(locale, "/policies")}
+              className="transition-colors hover:text-foreground"
+            >
+              {footer.policies}
+            </Link>
             <Link
               href={withLocale(locale, "/terms")}
               className="transition-colors hover:text-foreground"

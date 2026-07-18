@@ -14,6 +14,9 @@ export type RegisterFormLabels = Readonly<{
   nicknamePlaceholder: string;
   email: string;
   emailPlaceholder: string;
+  dateOfBirth: string;
+  ageHint: string;
+  errAge: string;
   password: string;
   passwordPlaceholder: string;
   confirmPassword: string;
@@ -22,6 +25,8 @@ export type RegisterFormLabels = Readonly<{
   terms: string;
   and: string;
   privacy: string;
+  acceptGuidelines: string;
+  communityGuidelines: string;
   submit: string;
   submitting: string;
   success: string;
@@ -46,7 +51,7 @@ type Props = Readonly<{
   localePrefix: string;
 }>;
 
-type Field = "nickname" | "email" | "password" | "confirm";
+type Field = "nickname" | "email" | "dateOfBirth" | "password" | "confirm";
 
 const inputBase =
   "h-10 w-full rounded-xl border border-input bg-surface pl-11 pr-11 text-[14px] text-foreground outline-none placeholder:text-muted-foreground/70 transition-all duration-200 focus-visible:border-primary focus-visible:shadow-[0_0_0_3px_rgb(37_99_235/0.16)] sm:h-[42px] sm:text-[15px]";
@@ -58,8 +63,10 @@ export function RegisterForm({ labels, localePrefix }: Props) {
   const router = useRouter();
   const [nickname, setNickname] = useState("");
   const [email, setEmail] = useState("");
+  const [dateOfBirth, setDateOfBirth] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
+  const [acceptGuidelines, setAcceptGuidelines] = useState(false);
   const [showPwd, setShowPwd] = useState(false);
   const [showConfirmPwd, setShowConfirmPwd] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -68,6 +75,7 @@ export function RegisterForm({ labels, localePrefix }: Props) {
   const [touched, setTouched] = useState<Record<Field, boolean>>({
     nickname: false,
     email: false,
+    dateOfBirth: false,
     password: false,
     confirm: false,
   });
@@ -81,29 +89,43 @@ export function RegisterForm({ labels, localePrefix }: Props) {
   const passwordIsValid = useMemo(() => isPasswordValid(password), [password]);
 
   const errors = useMemo(() => {
-    const e: Record<Field, string> = { nickname: "", email: "", password: "", confirm: "" };
+    const e: Record<Field, string> = {
+      nickname: "",
+      email: "",
+      dateOfBirth: "",
+      password: "",
+      confirm: "",
+    };
     if (nickname.trim().length < 2) e.nickname = labels.errNickname;
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) e.email = labels.errEmail;
+    if (!isOldEnough(dateOfBirth)) e.dateOfBirth = labels.errAge;
     if (!passwordIsValid) e.password = labels.errPassword;
     if (!confirm || confirm !== password) e.confirm = labels.errConfirm;
     return e;
-  }, [confirm, email, labels, nickname, password, passwordIsValid]);
+  }, [confirm, dateOfBirth, email, labels, nickname, password, passwordIsValid]);
 
   const validMap = {
     nickname: !errors.nickname,
     email: !errors.email,
+    dateOfBirth: !errors.dateOfBirth,
     password: !errors.password,
     confirm: !errors.confirm,
   };
 
-  const formValid = validMap.nickname && validMap.email && validMap.password && validMap.confirm;
+  const formValid =
+    validMap.nickname &&
+    validMap.email &&
+    validMap.dateOfBirth &&
+    validMap.password &&
+    validMap.confirm &&
+    acceptGuidelines;
 
   const pwdStrength = getPasswordStrengthMeta(passwordScore, labels);
   const titleParts = getTitleParts(labels.title);
 
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    setTouched({ nickname: true, email: true, password: true, confirm: true });
+    setTouched({ nickname: true, email: true, dateOfBirth: true, password: true, confirm: true });
     if (!formValid) return;
     setSubmitError("");
     setSubmitMessage("");
@@ -114,9 +136,14 @@ export function RegisterForm({ labels, localePrefix }: Props) {
         email: email.trim(),
         password,
         confirmPassword: confirm,
+        dateOfBirth,
+        locale: localePrefix.endsWith("/uk") ? "uk" : localePrefix.endsWith("/pl") ? "pl" : "en",
+        acceptCommunityGuidelines: acceptGuidelines,
       });
       setSubmitMessage(labels.success);
-      router.push(`${localePrefix}/auth/confirm-email?registered=1`);
+      router.push(
+        `${localePrefix}/auth/confirm-email?registered=1&email=${encodeURIComponent(email.trim())}`
+      );
     } catch (error) {
       const message = authService.getApiErrorMessage(error, labels.genericError);
       setSubmitError(message);
@@ -172,6 +199,8 @@ export function RegisterForm({ labels, localePrefix }: Props) {
         </div>
 
         <FieldWrap
+          htmlFor="register-nickname"
+          errorId="register-nickname-error"
           label={labels.nickname}
           error={touched.nickname ? errors.nickname : ""}
           valid={touched.nickname && validMap.nickname}
@@ -181,10 +210,17 @@ export function RegisterForm({ labels, localePrefix }: Props) {
             <UserIcon />
           </span>
           <input
+            id="register-nickname"
+            name="userName"
+            autoComplete="username"
             value={nickname}
             onChange={(e) => setNickname(e.target.value)}
             onBlur={() => setTouched((v) => ({ ...v, nickname: true }))}
             placeholder={labels.nicknamePlaceholder}
+            aria-invalid={(touched.nickname && Boolean(errors.nickname)) || undefined}
+            aria-describedby={
+              touched.nickname && errors.nickname ? "register-nickname-error" : undefined
+            }
             className={getInputClass(
               inputBase,
               touched.nickname,
@@ -195,6 +231,48 @@ export function RegisterForm({ labels, localePrefix }: Props) {
         </FieldWrap>
 
         <FieldWrap
+          htmlFor="register-date-of-birth"
+          errorId="register-date-of-birth-error"
+          label={labels.dateOfBirth}
+          error={touched.dateOfBirth ? errors.dateOfBirth : ""}
+          valid={touched.dateOfBirth && validMap.dateOfBirth}
+          delayMs={135}
+        >
+          <input
+            id="register-date-of-birth"
+            name="dateOfBirth"
+            autoComplete="bday"
+            value={dateOfBirth}
+            type="date"
+            onChange={(event) => setDateOfBirth(event.target.value)}
+            onBlur={() => setTouched((value) => ({ ...value, dateOfBirth: true }))}
+            className={getInputClass(
+              `${inputBase} pl-4 pr-11`,
+              touched.dateOfBirth,
+              !!errors.dateOfBirth,
+              validMap.dateOfBirth
+            )}
+            max={eighteenYearsAgo()}
+            min={oneHundredTwentyYearsAgo()}
+            aria-invalid={(touched.dateOfBirth && Boolean(errors.dateOfBirth)) || undefined}
+            aria-describedby={
+              touched.dateOfBirth && errors.dateOfBirth
+                ? "register-date-of-birth-error"
+                : !touched.dateOfBirth
+                  ? "register-date-of-birth-hint"
+                  : undefined
+            }
+          />
+          {!touched.dateOfBirth ? (
+            <p id="register-date-of-birth-hint" className="mt-1 text-[11px] text-muted-foreground">
+              {labels.ageHint}
+            </p>
+          ) : null}
+        </FieldWrap>
+
+        <FieldWrap
+          htmlFor="register-email"
+          errorId="register-email-error"
           label={labels.email}
           error={touched.email ? errors.email : ""}
           valid={touched.email && validMap.email}
@@ -204,16 +282,23 @@ export function RegisterForm({ labels, localePrefix }: Props) {
             <MailIcon />
           </span>
           <input
+            id="register-email"
+            name="email"
             value={email}
             type="email"
+            autoComplete="email"
             onChange={(e) => setEmail(e.target.value)}
             onBlur={() => setTouched((v) => ({ ...v, email: true }))}
             placeholder={labels.emailPlaceholder}
+            aria-invalid={(touched.email && Boolean(errors.email)) || undefined}
+            aria-describedby={touched.email && errors.email ? "register-email-error" : undefined}
             className={getInputClass(inputBase, touched.email, !!errors.email, validMap.email)}
           />
         </FieldWrap>
 
         <FieldWrap
+          htmlFor="register-password"
+          errorId="register-password-error"
           label={labels.password}
           error={touched.password ? errors.password : ""}
           valid={false}
@@ -224,11 +309,23 @@ export function RegisterForm({ labels, localePrefix }: Props) {
               <LockIcon />
             </span>
             <input
+              id="register-password"
+              name="password"
               value={password}
               type={showPwd ? "text" : "password"}
+              maxLength={128}
+              autoComplete="new-password"
               onChange={(e) => setPassword(e.target.value)}
               onBlur={() => setTouched((v) => ({ ...v, password: true }))}
               placeholder={labels.passwordPlaceholder}
+              aria-invalid={(touched.password && Boolean(errors.password)) || undefined}
+              aria-describedby={
+                touched.password && errors.password
+                  ? "register-password-error"
+                  : password.length > 0
+                    ? "register-password-strength"
+                    : undefined
+              }
               className={getInputClass(
                 inputBase,
                 touched.password,
@@ -241,6 +338,8 @@ export function RegisterForm({ labels, localePrefix }: Props) {
               onClick={() => setShowPwd((v) => !v)}
               className="absolute inset-y-0 right-3.5 flex cursor-pointer items-center text-muted-foreground transition-colors hover:text-foreground"
               aria-label={showPwd ? "Hide password" : "Show password"}
+              aria-controls="register-password"
+              aria-pressed={showPwd}
             >
               {showPwd ? <EyeOffIcon /> : <EyeIcon />}
             </button>
@@ -252,6 +351,7 @@ export function RegisterForm({ labels, localePrefix }: Props) {
           </div>
           {password.length > 0 ? (
             <PasswordMeter
+              id="register-password-strength"
               score={passwordScore}
               label={pwdStrength.label}
               color={pwdStrength.color}
@@ -260,6 +360,8 @@ export function RegisterForm({ labels, localePrefix }: Props) {
         </FieldWrap>
 
         <FieldWrap
+          htmlFor="register-confirm-password"
+          errorId="register-confirm-password-error"
           label={labels.confirmPassword}
           error={touched.confirm ? errors.confirm : ""}
           valid={touched.confirm && validMap.confirm}
@@ -270,11 +372,19 @@ export function RegisterForm({ labels, localePrefix }: Props) {
               <LockIcon />
             </span>
             <input
+              id="register-confirm-password"
+              name="confirmPassword"
               value={confirm}
               type={showConfirmPwd ? "text" : "password"}
+              maxLength={128}
+              autoComplete="new-password"
               onChange={(e) => setConfirm(e.target.value)}
               onBlur={() => setTouched((v) => ({ ...v, confirm: true }))}
               placeholder={labels.confirmPasswordPlaceholder}
+              aria-invalid={(touched.confirm && Boolean(errors.confirm)) || undefined}
+              aria-describedby={
+                touched.confirm && errors.confirm ? "register-confirm-password-error" : undefined
+              }
               className={getInputClass(
                 inputBase,
                 touched.confirm,
@@ -287,6 +397,8 @@ export function RegisterForm({ labels, localePrefix }: Props) {
               onClick={() => setShowConfirmPwd((v) => !v)}
               className="absolute inset-y-0 right-3.5 flex cursor-pointer items-center text-muted-foreground transition-colors hover:text-foreground"
               aria-label={showConfirmPwd ? "Hide confirm password" : "Show confirm password"}
+              aria-controls="register-confirm-password"
+              aria-pressed={showConfirmPwd}
             >
               {showConfirmPwd ? <EyeOffIcon /> : <EyeIcon />}
             </button>
@@ -297,6 +409,25 @@ export function RegisterForm({ labels, localePrefix }: Props) {
             ) : null}
           </div>
         </FieldWrap>
+
+        <label className="flex cursor-pointer items-start gap-2.5 rounded-xl border border-border bg-surface-muted/70 p-3 text-xs leading-relaxed text-muted-foreground">
+          <input
+            type="checkbox"
+            checked={acceptGuidelines}
+            onChange={(event) => setAcceptGuidelines(event.target.checked)}
+            className="mt-0.5 size-4 shrink-0 accent-primary"
+          />
+          <span>
+            {labels.acceptGuidelines}{" "}
+            <Link
+              href={`${localePrefix}/community-guidelines`}
+              className="font-semibold text-primary-text hover:underline"
+            >
+              {labels.communityGuidelines}
+            </Link>
+            , {labels.terms.toLocaleLowerCase()} {labels.and} {labels.privacy.toLocaleLowerCase()}.
+          </span>
+        </label>
 
         <button
           disabled={!formValid || loading}
@@ -360,12 +491,16 @@ export function RegisterForm({ labels, localePrefix }: Props) {
 
 function FieldWrap({
   children,
+  htmlFor,
+  errorId,
   label,
   error,
   valid,
   delayMs,
 }: Readonly<{
   children: ReactNode;
+  htmlFor: string;
+  errorId: string;
   label: string;
   error: string;
   valid: boolean;
@@ -373,7 +508,10 @@ function FieldWrap({
 }>) {
   return (
     <div className="register-fade-up space-y-px" style={{ animationDelay: `${delayMs}ms` }}>
-      <label className="text-xs leading-none font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+      <label
+        htmlFor={htmlFor}
+        className="text-xs leading-none font-semibold uppercase tracking-[0.08em] text-muted-foreground"
+      >
         {label}
       </label>
       <div className="relative">
@@ -384,7 +522,11 @@ function FieldWrap({
           </span>
         ) : null}
       </div>
-      {error ? <p className="text-[11px] leading-tight text-destructive">{error}</p> : null}
+      {error ? (
+        <p id={errorId} className="text-[11px] leading-tight text-destructive">
+          {error}
+        </p>
+      ) : null}
     </div>
   );
 }
@@ -409,14 +551,31 @@ function getInputClass(base: string, touched: boolean, hasError: boolean, isVali
 function getPasswordScore(password: string) {
   if (!password) return 0;
   let score = 1;
-  if (password.length >= 8) score += 1;
+  if (password.length >= 12) score += 1;
   if (/\d/.test(password)) score += 1;
   if (password.length >= 12 || /[^A-Za-z0-9]/.test(password)) score += 1;
   return Math.min(score, 4);
 }
 
 function isPasswordValid(password: string) {
-  return password.length >= 8 && /\d/.test(password);
+  return password.length >= 12 && /\d/.test(password);
+}
+
+function eighteenYearsAgo() {
+  const date = new Date();
+  date.setFullYear(date.getFullYear() - 18);
+  return date.toISOString().slice(0, 10);
+}
+
+function oneHundredTwentyYearsAgo() {
+  const date = new Date();
+  date.setFullYear(date.getFullYear() - 120);
+  return date.toISOString().slice(0, 10);
+}
+
+function isOldEnough(value: string) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  return value <= eighteenYearsAgo() && value >= oneHundredTwentyYearsAgo();
 }
 
 function getPasswordStrengthMeta(score: number, labels: RegisterFormLabels) {
@@ -427,12 +586,13 @@ function getPasswordStrengthMeta(score: number, labels: RegisterFormLabels) {
 }
 
 function PasswordMeter({
+  id,
   score,
   label,
   color,
-}: Readonly<{ score: number; label: string; color: string }>) {
+}: Readonly<{ id: string; score: number; label: string; color: string }>) {
   return (
-    <div className="mt-2">
+    <div id={id} className="mt-2" aria-live="polite">
       <div className="flex gap-1">
         {[1, 2, 3, 4].map((n) => (
           <span

@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { ForgotPasswordForm } from "@/components/auth/forgot-password-form";
+import { SkipLink } from "@/components/ui/skip-link";
 import { getMessages, isLocale } from "@/i18n/config";
 import type { Locale } from "@/i18n/locales";
-import { withLocale } from "@/i18n/paths";
 
 type Props = Readonly<{ params: Promise<{ locale: string }> }>;
 
@@ -29,20 +29,19 @@ export default async function ForgotPasswordPage({ params }: Props) {
   }
 
   const locale = raw as Locale;
-  const F = getMessages(locale).authForgot;
+  const t = getMessages(locale);
+  const F = t.authForgot;
 
   return (
-    <div className="flex min-h-full flex-col items-center justify-center px-4 py-10 sm:px-6 sm:py-16">
-      <div className="w-full max-w-md rounded-2xl border border-border bg-surface p-5 shadow-lg sm:p-8">
-        <h1 className="text-xl font-semibold tracking-tight text-foreground">{F.title}</h1>
-        <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{F.hint}</p>
-        <Link
-          href={withLocale(locale, "/auth/login")}
-          className="mt-6 inline-flex text-sm font-semibold text-primary-text underline-offset-2 hover:underline"
-        >
-          {F.backToLogin}
-        </Link>
-      </div>
-    </div>
+    <>
+      <SkipLink label={t.nav.skipToContent} />
+      <main
+        id="main-content"
+        tabIndex={-1}
+        className="flex min-h-full flex-col items-center justify-center px-4 py-10 sm:px-6 sm:py-16"
+      >
+        <ForgotPasswordForm locale={locale} labels={F} />
+      </main>
+    </>
   );
 }

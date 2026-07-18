@@ -12,6 +12,47 @@ import type {
 
 import api from "./api";
 
+export interface ProjectDraftReviewItem {
+  id: string;
+  reviewerUserId: number;
+  userName: string;
+  status: "pending" | "completed" | "expired" | "revoked";
+  comment?: string;
+  createdAt: string;
+  expiresAt: string;
+  viewedAt?: string;
+  submittedAt?: string;
+}
+
+export interface ProjectDraftReviewPreview {
+  id: string;
+  expiresAt: string;
+  status: string;
+  comment?: string;
+  project: {
+    id: number;
+    projectName: string;
+    problem: string;
+    expectedOutcome: string;
+    stage: string;
+    format: string;
+    duration: string;
+    hoursPerWeek: number | null;
+    timeZone: string;
+    teamLanguages: string;
+    projectLink: string;
+    positions: Array<{
+      id: number;
+      role: string;
+      tasks: string;
+      level: string;
+      isFilled: boolean;
+      mustHave: string[];
+      niceToHave: string[];
+    }>;
+  };
+}
+
 function projectParams(params?: ProjectFilters | PaginationParams) {
   if (!params) return undefined;
   return {
@@ -55,6 +96,59 @@ export const projectService = {
     (await api.patch<ProjectDetail>(`/api/projects/${id}/visibility/hide`)).data,
   publish: async (id: number) =>
     (await api.patch<ProjectDetail>(`/api/projects/${id}/visibility/publish`)).data,
+  archive: async (id: number) =>
+    (await api.patch<ProjectDetail>(`/api/projects/${id}/archive`)).data,
+  restore: async (id: number) =>
+    (await api.patch<ProjectDetail>(`/api/projects/${id}/restore`)).data,
+  confirmFreshnessActive: async (id: number) =>
+    (await api.post<ProjectDetail>(`/api/projects/${id}/freshness/confirm-active`)).data,
+  confirmFreshnessClose: async (id: number) =>
+    (await api.post<ProjectDetail>(`/api/projects/${id}/freshness/confirm-close`)).data,
+  previewFreshnessLink: async (id: number, token: string) =>
+    (
+      await api.get<{
+        project: {
+          id: number;
+          projectName: string;
+          healthStatus: string;
+          isRecruitmentClosed: boolean;
+          freshnessReviewRequiredAt: string | null;
+        };
+        expiresAt: string;
+        requiresExplicitConfirmation: boolean;
+      }>("/api/project-freshness/preview", {
+        params: { projectId: id, token },
+      })
+    ).data,
+  confirmFreshnessLink: async (id: number, token: string, action: "active" | "close") =>
+    (
+      await api.post<{
+        id: number;
+        healthStatus: string;
+        isRecruitmentClosed: boolean;
+      }>(`/api/project-freshness/confirm/${id}`, { token, action })
+    ).data,
+  draftReviews: async (projectId: number) =>
+    (await api.get<ProjectDraftReviewItem[]>(`/api/projects/${projectId}/draft-reviews`)).data,
+  inviteDraftReviewer: async (projectId: number, userName: string) =>
+    (
+      await api.post<{ id: string; expiresAt: string }>(
+        `/api/projects/${projectId}/draft-reviews`,
+        { userName }
+      )
+    ).data,
+  revokeDraftReview: async (projectId: number, reviewId: string) => {
+    await api.delete(`/api/projects/${projectId}/draft-reviews/${encodeURIComponent(reviewId)}`);
+  },
+  previewDraftReview: async (token: string) =>
+    (
+      await api.get<ProjectDraftReviewPreview>("/api/project-draft-reviews/preview", {
+        params: { token },
+      })
+    ).data,
+  submitDraftReview: async (token: string, comment: string) => {
+    await api.post("/api/project-draft-reviews/submit", { token, comment });
+  },
   addPosition: async (projectId: number, data: CreatePositionDto) => {
     const response = await api.post(`/api/projects/${projectId}/positions`, data);
     return response.data;

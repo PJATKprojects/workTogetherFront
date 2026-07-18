@@ -17,6 +17,62 @@ export type LegalDoc = {
   sections: readonly LegalSection[];
 };
 
+export type PolicyCardMessages = {
+  title: string;
+  description: string;
+  badge: string;
+};
+
+export type IllegalContentFormMessages = {
+  title: string;
+  intro: string;
+  emergency: string;
+  childSafetyNote: string;
+  name: string;
+  nameHint: string;
+  email: string;
+  emailHint: string;
+  contentUrl: string;
+  contentUrlHint: string;
+  category: string;
+  categories: {
+    childSafety: string;
+    threats: string;
+    hate: string;
+    fraud: string;
+    privacy: string;
+    intellectualProperty: string;
+    other: string;
+  };
+  legalReason: string;
+  legalReasonHint: string;
+  goodFaith: string;
+  submit: string;
+  submitting: string;
+  successTitle: string;
+  successBody: string;
+  referenceLabel: string;
+  another: string;
+  errors: {
+    summary: string;
+    name: string;
+    email: string;
+    contentUrl: string;
+    legalReason: string;
+    goodFaith: string;
+    generic: string;
+  };
+};
+
+export type ProjectTemplateMessages = {
+  name: string;
+  description: string;
+  problem: string;
+  expectedOutcome: string;
+  duration: string;
+  positionTasks: string;
+};
+
 export type SiteMessages = {
   meta: {
     title: string;
@@ -24,6 +80,7 @@ export type SiteMessages = {
   };
   nav: {
     brandWordmark: string;
+    skipToContent: string;
     menu: string;
     projects: string;
     students: string;
@@ -34,10 +91,12 @@ export type SiteMessages = {
     myApplications: string;
     myProjects: string;
     messages: string;
+    notifications: string;
     themeToggleAria: string;
     localeMenuButtonAria: string;
     localeEnglishAria: string;
     localeUkrainianAria: string;
+    localePolishAria: string;
   };
   home: {
     heroPill: string;
@@ -107,15 +166,45 @@ export type SiteMessages = {
     contact: string;
     terms: string;
     privacy: string;
+    policies: string;
   };
   legal: {
     updatedLabel: string;
     tocTitle: string;
     backHome: string;
     contactCta: string;
+    draftTitle: string;
+    draftBody: string;
+    providerTitle: string;
+    operatorName: string;
+    operatorAddress: string;
+    operatorRegister: string;
+    operatorTaxId: string;
+    contactEmail: string;
   };
   terms: LegalDoc;
   privacy: LegalDoc;
+  cookies: LegalDoc;
+  safety: LegalDoc;
+  accessibility: LegalDoc;
+  policyHub: {
+    metaTitle: string;
+    metaDescription: string;
+    eyebrow: string;
+    title: string;
+    intro: string;
+    launchTitle: string;
+    launchBody: string;
+    cards: {
+      terms: PolicyCardMessages;
+      privacy: PolicyCardMessages;
+      cookies: PolicyCardMessages;
+      community: PolicyCardMessages;
+      safety: PolicyCardMessages;
+      accessibility: PolicyCardMessages;
+    };
+  };
+  illegalContentForm: IllegalContentFormMessages;
   authLogin: {
     metaTitle: string;
     metaDescription: string;
@@ -133,6 +222,7 @@ export type SiteMessages = {
     divider: string;
     google: string;
     github: string;
+    passkey: string;
     noAccount: string;
     signUpCta: string;
     submitting: string;
@@ -150,6 +240,28 @@ export type SiteMessages = {
     metaDescription: string;
     title: string;
     hint: string;
+    email: string;
+    emailPlaceholder: string;
+    submit: string;
+    submitting: string;
+    success: string;
+    invalidEmail: string;
+    genericError: string;
+    backToLogin: string;
+  };
+  authReset: {
+    metaTitle: string;
+    metaDescription: string;
+    title: string;
+    hint: string;
+    password: string;
+    confirmPassword: string;
+    submit: string;
+    submitting: string;
+    success: string;
+    mismatch: string;
+    weakPassword: string;
+    invalidToken: string;
     backToLogin: string;
   };
   authCallback: {
@@ -159,6 +271,9 @@ export type SiteMessages = {
     notAvailable: string;
     accessDenied: string;
     emailLinked: string;
+    linkRequired: string;
+    linkConflict: string;
+    reauthRequired: string;
     invalidState: string;
     genericFailed: string;
     retry: string;
@@ -174,6 +289,9 @@ export type SiteMessages = {
     fullNamePlaceholder: string;
     email: string;
     emailPlaceholder: string;
+    dateOfBirth: string;
+    ageHint: string;
+    errAge: string;
     password: string;
     passwordPlaceholder: string;
     confirmPassword: string;
@@ -182,6 +300,8 @@ export type SiteMessages = {
     terms: string;
     and: string;
     privacy: string;
+    acceptGuidelines: string;
+    communityGuidelines: string;
     submit: string;
     submitting: string;
     success: string;
@@ -216,12 +336,18 @@ export type SiteMessages = {
   };
   authConfirm: {
     title: string;
+    ready: string;
+    confirm: string;
     confirming: string;
     preparing: string;
     missing: string;
     success: string;
     invalid: string;
     registered: string;
+    resend: string;
+    resending: string;
+    resent: string;
+    emailPlaceholder: string;
     login: string;
   };
   common: {
@@ -292,8 +418,6 @@ export type SiteMessages = {
     newSubtitle: string;
     editTitle: string;
     editSubtitle: string;
-    projectName: string;
-    projectNamePlaceholder: string;
     description: string;
     descriptionPlaceholder: string;
     position: string;
@@ -340,6 +464,56 @@ export type SiteMessages = {
     fullDescription: string;
     fullDescriptionHint: string;
     fullDescriptionPlaceholder: string;
+    templates: {
+      title: string;
+      subtitle: string;
+      apply: string;
+      overwriteHint: string;
+      applied: string;
+      items: {
+        studyProject: ProjectTemplateMessages;
+        openSource: ProjectTemplateMessages;
+        hackathon: ProjectTemplateMessages;
+        startupValidation: ProjectTemplateMessages;
+        research: ProjectTemplateMessages;
+        volunteer: ProjectTemplateMessages;
+      };
+    };
+    quality: {
+      title: string;
+      scoreLabel: string;
+      strong: string;
+      improving: string;
+      needsBasics: string;
+      guidance: string;
+      allSet: string;
+      suggestions: Record<string, string>;
+    };
+    preview: {
+      show: string;
+      hide: string;
+      title: string;
+      subtitle: string;
+      emptyName: string;
+      emptyDescription: string;
+      openRole: string;
+    };
+    health: {
+      label: string;
+      active: string;
+      slow: string;
+      paused: string;
+      completed: string;
+      abandoned: string;
+      activeHelp: string;
+      slowHelp: string;
+      pausedHelp: string;
+      completedHelp: string;
+      abandonedHelp: string;
+      lastActivity: string;
+      staleClosed: string;
+      qualityOwnerLabel: string;
+    };
     editor: {
       toolbarAria: string;
       bold: string;
@@ -384,6 +558,14 @@ export type SiteMessages = {
     pending: string;
     accepted: string;
     rejected: string;
+    draft: string;
+    sent: string;
+    viewed: string;
+    shortlisted: string;
+    interview: string;
+    trial: string;
+    withdrawn: string;
+    expired: string;
     confirmAccept: string;
     confirmReject: string;
     attachment: string;
@@ -443,6 +625,39 @@ export type SiteMessages = {
     myProjects: string;
     loadError: string;
     noData: string;
+  };
+  security: {
+    title: string;
+    subtitle: string;
+    loginMethods: string;
+    sessions: string;
+    password: string;
+    connected: string;
+    connect: string;
+    disconnect: string;
+    cannotDisconnect: string;
+    connectedOn: string;
+    currentSession: string;
+    lastSeen: string;
+    expires: string;
+    signOut: string;
+    signOutOthers: string;
+    signOutAll: string;
+    addPassword: string;
+    changePassword: string;
+    currentPassword: string;
+    newPassword: string;
+    confirmPassword: string;
+    savePassword: string;
+    passwordSaved: string;
+    passwordHint: string;
+    mismatch: string;
+    weakPassword: string;
+    loading: string;
+    loadError: string;
+    genericError: string;
+    unknownRegion: string;
+    backProfile: string;
   };
   students: {
     title: string;

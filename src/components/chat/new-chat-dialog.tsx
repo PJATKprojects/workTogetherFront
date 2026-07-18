@@ -35,6 +35,7 @@ export function NewChatDialog({
   const [title, setTitle] = useState("");
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [clientRequestId, setClientRequestId] = useState(() => crypto.randomUUID());
   const search = useChatUserSearch(debouncedEmail, open);
   const startDirect = useStartConversation();
   const createGroup = useCreateGroupConversation();
@@ -55,6 +56,7 @@ export function NewChatDialog({
     setTitle("");
     setMessage("");
     setError("");
+    setClientRequestId(crypto.randomUUID());
     onClose();
   };
 
@@ -85,12 +87,14 @@ export function NewChatDialog({
       const conversation =
         mode === "direct"
           ? await startDirect.mutateAsync({
+              clientRequestId,
               recipientUserId: selected[0].id,
               contextType: "user",
               contextId: 0,
               message: message.trim(),
             })
           : await createGroup.mutateAsync({
+              clientRequestId,
               title: title.trim(),
               participantUserIds: selected.map((item) => item.id),
               message: message.trim(),
@@ -158,7 +162,7 @@ export function NewChatDialog({
         <label className="mt-5 block text-sm font-medium">
           {labels.emailSearchPlaceholder}
           <Input
-            type="email"
+            type="text"
             value={email}
             autoComplete="off"
             placeholder="name@example.com"
@@ -168,7 +172,7 @@ export function NewChatDialog({
         </label>
 
         <div className="mt-2 min-h-11">
-          {email.trim().length < 3 ? (
+          {email.trim().length < 2 ? (
             <p className="text-xs text-muted-foreground">{labels.emailSearchHint}</p>
           ) : null}
           {search.isFetching ? (
@@ -202,7 +206,7 @@ export function NewChatDialog({
                         {candidate.userName}
                       </span>
                       <span className="block truncate text-xs text-muted-foreground">
-                        {candidate.email}
+                        {candidate.email ? candidate.email : candidate.userName}
                       </span>
                     </span>
                     <span

@@ -1,12 +1,14 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useCallback, useState } from "react";
+import { createPortal } from "react-dom";
 
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useStartConversation } from "@/hooks/use-chat";
 import { useAuth } from "@/hooks/use-auth";
+import { useDialogFocus } from "@/hooks/use-dialog-focus";
 import type { Locale } from "@/i18n/locales";
 import { withLocale } from "@/i18n/paths";
 import { getApiError } from "@/lib/api-error";
@@ -38,6 +40,10 @@ export function ChatLauncher({
   const [open, setOpen] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const closeComposer = useCallback(() => {
+    if (!mutation.isPending) setOpen(false);
+  }, [mutation.isPending]);
+  const dialogRef = useDialogFocus<HTMLDivElement>(open, closeComposer);
 
   if (user?.id === recipientUserId) return null;
 
@@ -80,60 +86,70 @@ export function ChatLauncher({
         <MessageIcon />
         {labels.writeMessage}
       </Button>
-      {open ? (
-        <div
-          className="fixed inset-0 z-[90] grid place-items-center bg-foreground/40 p-4 backdrop-blur-sm"
-          onClick={() => !mutation.isPending && setOpen(false)}
-        >
-          <div
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="chat-composer-title"
-            className="glass-panel w-full max-w-lg rounded-3xl p-6"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <h2 id="chat-composer-title" className="text-xl font-semibold">
-              {labels.writeTo.replace("{name}", recipientName)}
-            </h2>
-            <Textarea
-              autoFocus
-              maxLength={4000}
-              value={message}
-              placeholder={labels.firstMessagePlaceholder}
-              className="mt-4 min-h-36 resize-none"
-              style={{ resize: "none" }}
-              onChange={(event) => setMessage(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === "Enter" && (event.ctrlKey || event.metaKey)) {
-                  event.preventDefault();
-                  void send();
-                }
-              }}
-            />
-            <div className="mt-1 text-right text-xs text-muted-foreground">
-              {message.length}/4000
-            </div>
-            {error ? <p className="mt-2 text-sm text-destructive">{error}</p> : null}
-            <div className="mt-5 flex justify-end gap-3">
-              <Button
-                type="button"
-                variant="ghost"
-                disabled={mutation.isPending}
-                onClick={() => setOpen(false)}
+      {open
+        ? createPortal(
+            <div
+              className="fixed inset-0 z-[90] grid place-items-center bg-foreground/40 p-4 backdrop-blur-sm"
+              onClick={closeComposer}
+            >
+              <div
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="chat-composer-title"
+                ref={dialogRef}
+                tabIndex={-1}
+                className="glass-panel max-h-[calc(100dvh-2rem)] w-full max-w-lg overflow-y-auto rounded-3xl p-6"
+                onClick={(event) => event.stopPropagation()}
               >
-                {labels.cancel}
-              </Button>
-              <Button
-                type="button"
-                disabled={!message.trim() || mutation.isPending}
-                onClick={() => void send()}
-              >
-                {mutation.isPending ? labels.sending : labels.send}
-              </Button>
-            </div>
-          </div>
-        </div>
-      ) : null}
+                <h2 id="chat-composer-title" className="text-xl font-semibold">
+                  {labels.writeTo.replace("{name}", recipientName)}
+                </h2>
+                <Textarea
+                  autoFocus
+                  data-dialog-initial-focus
+                  maxLength={4000}
+                  value={message}
+                  placeholder={labels.firstMessagePlaceholder}
+                  className="mt-4 min-h-36 resize-none"
+                  style={{ resize: "none" }}
+                  onChange={(event) => setMessage(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" && (event.ctrlKey || event.metaKey)) {
+                      event.preventDefault();
+                      void send();
+                    }
+                  }}
+                />
+                <div className="mt-1 text-right text-xs text-muted-foreground">
+                  {message.length}/4000
+                </div>
+                {error ? (
+                  <p className="mt-2 text-sm text-destructive" role="alert">
+                    {error}
+                  </p>
+                ) : null}
+                <div className="mt-5 flex justify-end gap-3">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    disabled={mutation.isPending}
+                    onClick={closeComposer}
+                  >
+                    {labels.cancel}
+                  </Button>
+                  <Button
+                    type="button"
+                    disabled={!message.trim() || mutation.isPending}
+                    onClick={() => void send()}
+                  >
+                    {mutation.isPending ? labels.sending : labels.send}
+                  </Button>
+                </div>
+              </div>
+            </div>,
+            document.body
+          )
+        : null}
     </>
   );
 }

@@ -4,7 +4,7 @@ Frontend application built with Next.js, React, and TypeScript.
 
 ## Requirements
 
-- Node.js 20+
+- Node.js 22.22.1+
 - npm 10+
 
 ## Setup
@@ -27,9 +27,21 @@ Frontend application built with Next.js, React, and TypeScript.
 
 ## Environment Variables
 
-Required:
+Local development:
 
-- `NEXT_PUBLIC_API_URL` - base URL for backend API (example: `http://localhost:3001`).
+- `NEXT_PUBLIC_API_URL` — backend origin (for example `http://localhost:8081`).
+
+Vercel production:
+
+- `API_PROXY_TARGET` — Azure backend origin used by same-origin `/api` rewrites;
+- `API_PROXY_SECRET` — server-only proxy header secret, equal to backend `ReverseProxy__RequiredHeaderSecret`;
+- `NEXT_PUBLIC_REALTIME_URL` — Azure backend origin used only for the authenticated SignalR connection;
+- leave `NEXT_PUBLIC_API_URL` empty so cookies remain first-party through `/api`.
+- keep `LEGAL_DOCUMENTS_STATUS=draft` until Polish legal review and operator verification;
+- set `LEGAL_OPERATOR_NAME`, `LEGAL_OPERATOR_ADDRESS`, `LEGAL_OPERATOR_REGISTER`,
+  `LEGAL_OPERATOR_NIP` and `LEGAL_CONTACT_EMAIL`;
+- switch `LEGAL_DOCUMENTS_STATUS=published` only after every value is verified. A
+  published build fails fast when any required operator field is missing.
 
 ## Scripts
 
@@ -46,7 +58,6 @@ Required:
 
 ## Quality Gates
 
-- Pre-commit hook runs `lint-staged` on staged files (format + eslint fix).
 - Commit message hook validates conventional commits via commitlint.
 - CI validates `lint`, `typecheck`, and `build` on pushes and pull requests.
 

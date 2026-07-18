@@ -1,0 +1,41 @@
+name: Production synthetic checks
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "*/15 * * * *"
+
+jobs:
+  production-synthetic:
+    if: ${{ vars.SYNTHETIC_BASE_URL != '' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Run registration, login, search, application, email and health checks
+        id: synthetic
+        env:
+          SYNTHETIC_BASE_URL: ${{ vars.SYNTHETIC_BASE_URL }}
+          SYNTHETIC_LOCALE: ${{ vars.SYNTHETIC_LOCALE }}
+          SYNTHETIC_EMAIL: ${{ secrets.SYNTHETIC_EMAIL }}
+          SYNTHETIC_PASSWORD: ${{ secrets.SYNTHETIC_PASSWORD }}
+        run: node scripts/synthetic-check.mjs | tee synthetic-result.json
+      - name: Upload result
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: synthetic-result
+          path: synthetic-result.json
+          retention-days: 30
+      - name: Notify on-call webhook
+        if: failure() && secrets.ON_CALL_WEBHOOK_URL != ''
+        env:
+          ON_CALL_WEBHOOK_URL: ${{ secrets.ON_CALL_WEBHOOK_URL }}
+        run: |
+          curl --fail-with-body --retry 3 \
+            -H "content-type: application/json" \
+            --data '{"text":"WorkTogether production synthetic check failed. See the GitHub Actions run for correlation IDs and diagnostics."}' \
+            "$ON_CALL_WEBHOOK_URL"

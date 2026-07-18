@@ -11,7 +11,7 @@ declare module "axios" {
 
 type RequestWithMetadata = InternalAxiosRequestConfig & {
   _retry?: boolean;
-  metadata?: { cacheKey: string; cacheable: boolean };
+  metadata?: { cacheKey: string; cacheable: boolean; correlationId: string };
 };
 
 const api = axios.create({
@@ -24,7 +24,12 @@ const api = axios.create({
 const etagStore = new Map<string, string>();
 const responseCache = new Map<string, unknown>();
 
-export type AuthSession = { token: string; user: PrivateUser };
+export type AuthSession = {
+  token: string;
+  user: PrivateUser;
+  requiresCommunityOnboarding: boolean;
+  requiresProductOnboarding: boolean;
+};
 
 let sessionRefreshPromise: Promise<AuthSession> | null = null;
 let authSessionEpoch = 0;
@@ -77,6 +82,13 @@ function getRequestCacheKey(url?: string, params?: unknown) {
   return `${url ?? ""}|${JSON.stringify(params ?? {})}`;
 }
 
+function newCorrelationId() {
+  if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
+    return crypto.randomUUID();
+  }
+  return `web-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 14)}`;
+}
+
 api.interceptors.request.use((config) => {
   const request = config as RequestWithMetadata;
   const token = tokenStore.get();
@@ -84,7 +96,9 @@ api.interceptors.request.use((config) => {
   // another account. React Query owns their in-memory caching instead.
   const cacheable = !token && config.method?.toLowerCase() === "get";
   const cacheKey = getRequestCacheKey(config.url, config.params);
-  request.metadata = { cacheKey, cacheable };
+  const correlationId = request.metadata?.correlationId ?? newCorrelationId();
+  request.metadata = { cacheKey, cacheable, correlationId };
+  config.headers["X-Correlation-ID"] = correlationId;
 
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
@@ -120,6 +134,16 @@ api.interceptors.response.use(
     if (!axios.isAxiosError(error) || !error.config) return Promise.reject(error);
 
     const request = error.config as RequestWithMetadata;
+    if (error.response?.status === 428 && typeof window !== "undefined") {
+      const body = error.response.data as { errors?: { mfa?: string[] } } | undefined;
+      window.dispatchEvent(
+        new CustomEvent("wt:mfa-required", {
+          detail: {
+            mode: body?.errors?.mfa?.[0] ?? "verification_required",
+          },
+        })
+      );
+    }
     const isRefresh = request.url?.includes("/api/auth/refresh");
     const isPublicAuth = /\/api\/auth\/(login|register|confirm-email)/.test(request.url ?? "");
 

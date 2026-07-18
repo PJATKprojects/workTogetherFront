@@ -17,28 +17,43 @@ import { LoadingSkeleton } from "../ui/loading-skeleton";
 import { Pagination } from "../ui/pagination";
 import { ProjectCard } from "./project-card";
 import { ProjectFilters } from "./project-filters";
+import { SavedSearchControls } from "./saved-search-controls";
 
 export function ProjectList({
   locale,
   labels,
   common,
   errors,
+  initialSavedSearchId,
 }: Readonly<{
   locale: Locale;
   labels: SiteMessages["projects"];
   common: SiteMessages["common"];
   errors: SiteMessages["errors"];
+  initialSavedSearchId?: number;
 }>) {
   const [filters, setFilters] = useState<ProjectFilterValues>({
     page: 1,
     pageSize: 12,
-    sort: "newest",
+    sort: "-createdAt",
   });
   const query = useProjectsQuery(filters);
 
   return (
     <>
-      <ProjectFilters filters={filters} labels={labels} common={common} onChange={setFilters} />
+      <ProjectFilters
+        filters={filters}
+        labels={labels}
+        common={common}
+        locale={locale}
+        onChange={setFilters}
+      />
+      <SavedSearchControls
+        locale={locale}
+        filters={filters}
+        onApply={setFilters}
+        initialSavedSearchId={initialSavedSearchId}
+      />
       <div className="mt-7">
         {query.isLoading ? <LoadingSkeleton count={6} /> : null}
         {query.isError ? (

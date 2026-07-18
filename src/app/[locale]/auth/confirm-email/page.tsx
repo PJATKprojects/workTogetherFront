@@ -15,7 +15,9 @@ export default async function ConfirmEmailPage({
   return (
     <Suspense
       fallback={
-        <main className="grid min-h-[70vh] place-items-center">{t.authConfirm.preparing}</main>
+        <main id="main-content" tabIndex={-1} className="grid min-h-[70vh] place-items-center">
+          {t.authConfirm.preparing}
+        </main>
       }
     >
       <ConfirmEmailContent locale={raw} labels={t.authConfirm} />

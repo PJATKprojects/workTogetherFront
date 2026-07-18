@@ -1,4 +1,5 @@
 import type { SiteMessages } from "./types";
+import { enPolicyMessages } from "./policies/en";
 
 /** Default site locale — canonical copy. */
 export const en: SiteMessages = {
@@ -9,6 +10,7 @@ export const en: SiteMessages = {
   },
   nav: {
     brandWordmark: "WorkTogether",
+    skipToContent: "Skip to main content",
     menu: "Menu",
     projects: "Projects",
     students: "Students",
@@ -19,10 +21,12 @@ export const en: SiteMessages = {
     myApplications: "My applications",
     myProjects: "My projects",
     messages: "Messages",
+    notifications: "Notifications",
     themeToggleAria: "Switch between light and dark theme",
     localeMenuButtonAria: "Language",
     localeEnglishAria: "English",
     localeUkrainianAria: "Ukrainian",
+    localePolishAria: "Polish",
   },
   home: {
     heroPill: "Where ideas meet teammates",
@@ -105,6 +109,7 @@ export const en: SiteMessages = {
     contact: "Contact",
     terms: "Terms of Service",
     privacy: "Privacy Policy",
+    policies: "Policies and safety",
   },
   authLogin: {
     metaTitle: "Log in — WorkTogether",
@@ -124,6 +129,7 @@ export const en: SiteMessages = {
     divider: "Or continue with",
     google: "Google",
     github: "GitHub",
+    passkey: "Continue with a passkey",
     noAccount: "New here?",
     signUpCta: "Create an account",
     submitting: "Signing in...",
@@ -138,11 +144,33 @@ export const en: SiteMessages = {
   },
   authForgot: {
     metaTitle: "Forgot password — WorkTogether",
-    metaDescription:
-      "Request a reset link once account recovery goes live—we are wiring the backend next.",
-    title: "Password reset coming soon",
-    hint: "We will send a recovery link by email once the API endpoint is hooked up.",
+    metaDescription: "Request a secure, one-time password reset link.",
+    title: "Reset your password",
+    hint: "Enter your email. For privacy, we show the same result whether or not an account exists.",
+    email: "Email",
+    emailPlaceholder: "you@company.com",
+    submit: "Send reset link",
+    submitting: "Sending…",
+    success:
+      "If an eligible account exists, a reset link has been sent. Check your inbox and spam folder.",
+    invalidEmail: "Enter a valid email address.",
+    genericError: "We could not process the request. Please try again shortly.",
     backToLogin: "Back to log in",
+  },
+  authReset: {
+    metaTitle: "Choose a new password — WorkTogether",
+    metaDescription: "Complete account recovery with a one-time reset link.",
+    title: "Choose a new password",
+    hint: "This one-time link expires after 60 minutes. Resetting signs out every active session.",
+    password: "New password",
+    confirmPassword: "Confirm new password",
+    submit: "Update password",
+    submitting: "Updating…",
+    success: "Password updated. All previous sessions have been signed out.",
+    mismatch: "Passwords do not match.",
+    weakPassword: "Use at least 12 characters and one number.",
+    invalidToken: "This reset link is invalid, expired, or already used.",
+    backToLogin: "Go to log in",
   },
   authCallback: {
     metaTitle: "Signing you in — WorkTogether",
@@ -151,6 +179,10 @@ export const en: SiteMessages = {
     notAvailable: "This sign-in provider isn't configured yet. Use email and password instead.",
     accessDenied: "You cancelled the sign-in on the provider's page.",
     emailLinked: "This email is already linked to a different sign-in provider.",
+    linkRequired:
+      "An account already uses this email. Sign in to it, then connect this provider in Security settings.",
+    linkConflict: "That provider account is already connected elsewhere or cannot be linked.",
+    reauthRequired: "For security, sign in again before connecting another provider.",
     invalidState: "The sign-in link expired or was already used. Please try again.",
     genericFailed: "Something went wrong during sign-in. Please try again.",
     retry: "Back to log in",
@@ -166,6 +198,9 @@ export const en: SiteMessages = {
     fullNamePlaceholder: "johnnydev",
     email: "Email",
     emailPlaceholder: "you@company.com",
+    dateOfBirth: "Date of birth",
+    ageHint: "You must be at least 18. Your birth date is private.",
+    errAge: "Enter a valid birth date; the minimum age is 18",
     password: "Password",
     passwordPlaceholder: "Create a strong password",
     confirmPassword: "Confirm password",
@@ -174,6 +209,8 @@ export const en: SiteMessages = {
     terms: "Terms of Service",
     and: "and",
     privacy: "Privacy Policy",
+    acceptGuidelines: "I confirm that I am at least 18 and accept the",
+    communityGuidelines: "Community Guidelines",
     submit: "Create account",
     submitting: "Creating account",
     success: "Account created. Check your email and confirm your account before login.",
@@ -188,7 +225,7 @@ export const en: SiteMessages = {
     pwdStrong: "Strong",
     errName: "Nickname must be at least 2 characters",
     errEmail: "Please enter a valid email address",
-    errPassword: "Use at least 8 characters and 1 number",
+    errPassword: "Use at least 12 characters and 1 number",
     errConfirm: "Passwords don't match",
     genericError: "Unable to create account right now. Please try again.",
     panelTitle: "Ship together.",
@@ -208,12 +245,18 @@ export const en: SiteMessages = {
   },
   authConfirm: {
     title: "Email confirmation",
+    ready: "The link is ready. Confirm explicitly to verify this email.",
+    confirm: "Confirm email",
     confirming: "Confirming your email...",
     preparing: "Preparing confirmation...",
     missing: "Confirmation token is missing.",
     success: "Email confirmed successfully.",
     invalid: "The confirmation link is invalid or expired.",
     registered: "Account created. Check your inbox and confirm your email before signing in.",
+    resend: "Send confirmation again",
+    resending: "Sending…",
+    resent: "If the account still needs confirmation, a new email has been sent.",
+    emailPlaceholder: "Email used at registration",
     login: "Go to login",
   },
   common: {
@@ -284,8 +327,6 @@ export const en: SiteMessages = {
     newSubtitle: "Describe the idea and add at least one role your team needs.",
     editTitle: "Edit project",
     editSubtitle: "Update the project and manage each position independently.",
-    projectName: "Project name",
-    projectNamePlaceholder: "Campus events app",
     description: "Description",
     descriptionPlaceholder: "What are you building and why does it matter?",
     position: "Position",
@@ -334,6 +375,128 @@ export const en: SiteMessages = {
     fullDescriptionHint: "optional — rich text, images and files",
     fullDescriptionPlaceholder:
       "Tell the whole story: goals, scope, mockups, tech decisions, timeline…",
+    templates: {
+      title: "Start from a project template",
+      subtitle:
+        "Templates fill practical defaults. You still choose the role and technologies before publishing.",
+      apply: "Use this template",
+      overwriteHint: "Applying a template replaces the current brief and expectation fields.",
+      applied: "Template applied. Review every field before publishing.",
+      items: {
+        studyProject: {
+          name: "Study project",
+          description: "Learn together around one small, reviewable result.",
+          problem:
+            "People learning the same topic need a shared plan, peer feedback, and a practical result.",
+          expectedOutcome:
+            "A working demo or study artifact plus concise notes that every participant can reuse.",
+          duration: "4 weeks, flexible",
+          positionTasks:
+            "Own one small exercise or topic, share the result, and review another participant’s work.",
+        },
+        openSource: {
+          name: "Open source",
+          description: "Ship a documented release with public contribution evidence.",
+          problem:
+            "A useful public tool has a small set of documented issues that need contributors.",
+          expectedOutcome:
+            "A reviewed release with tests, documentation, and visible contribution history.",
+          duration: "6 weeks, flexible",
+          positionTasks:
+            "Take one documented issue from proposal through review, tests, and release notes.",
+        },
+        hackathon: {
+          name: "Hackathon",
+          description: "A short, deadline-driven sprint ending in a demo.",
+          problem:
+            "The event deadline requires a clear problem, small scope, and explicit ownership.",
+          expectedOutcome: "A stable demo, short presentation, and documented fallback scope.",
+          duration: "Hackathon dates, flexible scope",
+          positionTasks:
+            "Own one demo-critical slice, surface blockers early, and help prepare the presentation.",
+        },
+        startupValidation: {
+          name: "Startup validation",
+          description: "Test a problem and ship a small validation MVP.",
+          problem:
+            "A concrete user problem exists, but its urgency and smallest useful solution are not proven.",
+          expectedOutcome: "Interview evidence and one measurable prototype or MVP experiment.",
+          duration: "4–6 weeks, flexible",
+          positionTasks: "Own one validation slice and deliver a reviewable result each week.",
+        },
+        research: {
+          name: "Research",
+          description: "Answer one bounded question with traceable evidence.",
+          problem:
+            "A concrete question needs structured research, documented sources, and a reviewable conclusion.",
+          expectedOutcome:
+            "A concise research report, reusable evidence, and clearly documented limitations.",
+          duration: "4–8 weeks, flexible",
+          positionTasks:
+            "Own one research task, document the method and evidence, and review another conclusion.",
+        },
+        volunteer: {
+          name: "Volunteer",
+          description: "Solve a verified community need with a realistic handoff.",
+          problem:
+            "A community or nonprofit partner has a concrete need that a small volunteer team can solve.",
+          expectedOutcome:
+            "An accessible solution, documentation, and a sustainable handoff to the partner.",
+          duration: "6–10 weeks, flexible",
+          positionTasks:
+            "Own one agreed deliverable and validate it with the partner or representative users.",
+        },
+      },
+    },
+    quality: {
+      title: "Project readiness",
+      scoreLabel: "Readiness score",
+      strong: "Ready for useful applications",
+      improving: "Good foundation — add a few concrete expectations",
+      needsBasics: "Add the basics candidates need before applying",
+      guidance:
+        "This is a transparent checklist, not a ranking score. Clear short copy receives full credit.",
+      allSet: "The brief covers every readiness item.",
+      suggestions: {
+        positions: "Add at least one role with the technologies it will use.",
+        tasks: "Describe the tasks for every role.",
+        mustHave: "Choose at least one must-have skill for every role.",
+        logistics: "Choose the stage, format, and flexible duration.",
+        languages: "State the team’s working language.",
+        problem: "Name the problem the project will solve.",
+        expectedOutcome: "State the concrete result the team expects.",
+        timezone: "Add the team timezone.",
+        level: "Choose the expected level for every role.",
+      },
+    },
+    preview: {
+      show: "Preview project card",
+      hide: "Hide preview",
+      title: "Candidate preview",
+      subtitle: "This is how the key information will read before someone applies.",
+      emptyName: "Untitled project",
+      emptyDescription: "Your short project summary will appear here.",
+      openRole: "Open role",
+    },
+    health: {
+      label: "Project health",
+      active: "Active",
+      slow: "Slow",
+      paused: "Paused",
+      completed: "Completed",
+      abandoned: "Abandoned",
+      activeHelp:
+        "Current and recruiting. Returning to Active reopens an automatically stale-closed recruitment.",
+      slowHelp: "Still running, but updates or decisions are taking longer.",
+      pausedHelp: "Temporarily paused. Recruitment is closed while history remains visible.",
+      completedHelp: "Finished with an outcome. Recruitment is closed.",
+      abandonedHelp:
+        "Ended without completion. Keep the history and add a short retrospective when possible.",
+      lastActivity: "Last activity",
+      staleClosed:
+        "Recruitment was closed automatically because the owner had not reviewed the project for 30 days.",
+      qualityOwnerLabel: "Brief readiness",
+    },
     editor: {
       toolbarAria: "Formatting toolbar",
       bold: "Bold",
@@ -378,6 +541,14 @@ export const en: SiteMessages = {
     pending: "Pending",
     accepted: "Accepted",
     rejected: "Rejected",
+    draft: "Draft",
+    sent: "Sent",
+    viewed: "Viewed",
+    shortlisted: "Shortlisted",
+    interview: "Interview",
+    trial: "Trial",
+    withdrawn: "Withdrawn",
+    expired: "Expired",
     confirmAccept: "Accept this application?",
     confirmReject: "Reject this application?",
     attachment: "Resume / link",
@@ -439,6 +610,40 @@ export const en: SiteMessages = {
     loadError: "Could not load your profile. Please sign in again.",
     noData: "No profile data found.",
   },
+  security: {
+    title: "Security and sign-in",
+    subtitle: "Manage passwords, connected providers, and every device signed into your account.",
+    loginMethods: "Sign-in methods",
+    sessions: "Active sessions",
+    password: "Password",
+    connected: "Connected",
+    connect: "Connect",
+    disconnect: "Disconnect",
+    cannotDisconnect: "Add another sign-in method before disconnecting this one.",
+    connectedOn: "Connected {date}",
+    currentSession: "This device",
+    lastSeen: "Last active {date}",
+    expires: "Expires {date}",
+    signOut: "Sign out",
+    signOutOthers: "Sign out other devices",
+    signOutAll: "Sign out everywhere",
+    addPassword: "Add a password",
+    changePassword: "Change password",
+    currentPassword: "Current password",
+    newPassword: "New password",
+    confirmPassword: "Confirm new password",
+    savePassword: "Save password",
+    passwordSaved: "Password saved. You can now sign in with email and password.",
+    passwordHint:
+      "Use at least 12 characters and one number. OAuth-only accounts can add a password here.",
+    mismatch: "Passwords do not match.",
+    weakPassword: "Use at least 12 characters and one number.",
+    loading: "Loading security settings…",
+    loadError: "Could not load security settings.",
+    genericError: "The security change could not be completed. Sign in again and retry.",
+    unknownRegion: "Region unavailable",
+    backProfile: "Back to profile",
+  },
   students: {
     title: "Students looking for a team",
     subtitle: "Discover available builders by their interests and technology stack.",
@@ -481,10 +686,11 @@ export const en: SiteMessages = {
     newChatTitle: "Start a conversation",
     directChat: "Direct",
     groupChat: "Group",
-    emailSearchPlaceholder: "Find a user by email",
-    emailSearchHint: "Enter at least 3 characters of the email address.",
+    emailSearchPlaceholder: "Find a user by username",
+    emailSearchHint:
+      "Enter at least 2 characters of the username. Email search is disabled for privacy.",
     searchingUsers: "Searching…",
-    noUsersFound: "No users found for this email.",
+    noUsersFound: "No users found for this username.",
     selectedUser: "Selected user",
     selectedMembers: "Selected members ({count})",
     groupTitle: "Group name",
@@ -511,7 +717,7 @@ export const en: SiteMessages = {
     leaveGroupConfirm: "Are you sure you want to leave this group?",
     onlyAdminsManage: "Only administrators can change the name and manage members.",
     groupUpdated: "Group updated",
-    noAvailableUsers: "No new users found for this email.",
+    noAvailableUsers: "No new users found for this username.",
     loadEarlier: "Load earlier messages",
     loadingEarlier: "Loading…",
     addAttachment: "Attach photos or files",
@@ -540,27 +746,36 @@ export const en: SiteMessages = {
     tocTitle: "On this page",
     backHome: "Back to home",
     contactCta: "Questions? Write to",
+    draftTitle: "Launch draft — provider details are incomplete",
+    draftBody:
+      "This document must not be published as final until the operator identity, registered address and registration details below are configured and reviewed.",
+    providerTitle: "Service provider and data controller",
+    operatorName: "Legal name",
+    operatorAddress: "Registered address",
+    operatorRegister: "Register / registration number",
+    operatorTaxId: "Tax ID (NIP)",
+    contactEmail: "Contact email",
   },
   terms: {
     metaTitle: "Terms of Service — WorkTogether",
     metaDescription:
       "The rules for using WorkTogether: accounts, projects, applications, acceptable use, and liability.",
     title: "Terms of Service",
-    updated: "July 16, 2026",
+    updated: "July 18, 2026",
     intro:
       "These Terms of Service (the “Terms”) govern your use of WorkTogether — a platform where students publish projects, open team positions, and apply to join other people's projects. By creating an account or using the site you agree to these Terms. If you do not agree, do not use the service.",
     sections: [
       {
         heading: "1. About the service",
         body: [
-          "WorkTogether is operated by the WorkTogether team (“we”, “us”). The platform lets you create a profile, publish projects with open positions, browse other students' projects and profiles, and apply to positions.",
-          "The service is currently provided free of charge and is in active development (MVP stage). Features may change, be added, or be removed as the product evolves.",
+          "The legal person identified in the provider box above supplies the electronic service and is referred to as “WorkTogether”, “we” or “us”. The platform lets adults create profiles, publish projects and roles, apply, message and collaborate.",
+          "The pilot is free and under active development. WorkTogether is not an employer, recruitment agency, payment provider or party to agreements between project participants.",
         ],
       },
       {
         heading: "2. Eligibility and your account",
         body: [
-          "You must be at least 16 years old to use WorkTogether.",
+          "You must be at least 18 years old to use WorkTogether.",
           "You register with a display name, an email address, and a password. Your account becomes active after you confirm your email via the link we send you — the confirmation link is valid for 24 hours.",
         ],
         bullets: [
@@ -581,7 +796,7 @@ export const en: SiteMessages = {
         heading: "4. Your content",
         body: [
           "You keep all rights to the content you post: your profile text, project names and descriptions, position requirements, and links (GitHub, LinkedIn, CV).",
-          "By posting content you grant us a non-exclusive, worldwide, royalty-free licence to host and display it on WorkTogether so the service can function — for example, showing your public profile to other users or your project in the catalog. This licence ends when the content is deleted from the platform.",
+          "By posting content you grant us a non-exclusive, worldwide, royalty-free licence to host and display it on WorkTogether so the service can function — for example, showing your public profile to other users or your project in the catalog. The licence ends when the content is deleted, except for limited backups, legal evidence and content already lawfully relied on by a team where retention is necessary.",
           "You are responsible for the content you post and must have the rights to share it.",
         ],
       },
@@ -611,7 +826,9 @@ export const en: SiteMessages = {
       {
         heading: "8. Availability and changes to the service",
         body: [
-          "The service is provided “as is” and “as available”. As an MVP it may contain errors, and we may modify or suspend parts of the service, perform maintenance, or introduce limits (such as request rate limits) at any time. Where reasonable, we will give notice of significant changes.",
+          "You need internet access, a current browser with JavaScript and first-party cookies enabled, and an email account. Passkeys, push and some integrations additionally require compatible browser or device support.",
+          "External links and files may create malware, phishing or privacy risks. Check their destination, keep your device updated and never share passwords, passkeys, MFA or recovery codes.",
+          "The service is provided “as available”. We may perform maintenance, correct faults, introduce proportionate security limits or withdraw a feature. Where reasonable, we will give notice of material changes.",
         ],
       },
       {
@@ -623,8 +840,8 @@ export const en: SiteMessages = {
       {
         heading: "10. Limitation of liability",
         body: [
-          "To the maximum extent permitted by law, the WorkTogether team is not liable for indirect, incidental, or consequential damages, loss of data, or loss of opportunities arising from the use of (or inability to use) the service. The service is free; our aggregate liability for any claim is limited to the amount you paid us — which is zero.",
-          "Nothing in these Terms limits liability that cannot be limited under applicable law.",
+          "We are not responsible for users' statements, off-platform agreements or collaboration outcomes, but we remain responsible where mandatory law requires it.",
+          "Nothing excludes or limits mandatory consumer rights or liability that cannot legally be excluded, including liability for intentional harm.",
         ],
       },
       {
@@ -643,13 +860,13 @@ export const en: SiteMessages = {
       {
         heading: "13. Governing law",
         body: [
-          "These Terms are governed by the laws of Ukraine. Disputes are resolved by the competent courts of Ukraine, unless mandatory consumer-protection rules of your country of residence provide otherwise.",
+          "These Terms are governed by Polish law. This choice does not deprive a consumer of mandatory protections of the country where they habitually reside. A competent court is determined by applicable law.",
         ],
       },
       {
         heading: "14. Contact",
         body: [
-          "Questions about these Terms: support@worktogether.app. We aim to reply within a reasonable time.",
+          "Complaints and questions can be sent to support@worktogether.app. Include your account email where relevant, the affected URL or feature, a description and the requested outcome. We aim to acknowledge and answer a complete complaint within 14 days; a statutory deadline prevails if different.",
         ],
       },
     ],
@@ -659,9 +876,9 @@ export const en: SiteMessages = {
     metaDescription:
       "What data WorkTogether collects, why, how long it is kept, what other users can see, and your rights.",
     title: "Privacy Policy",
-    updated: "July 16, 2026",
+    updated: "July 18, 2026",
     intro:
-      "This Privacy Policy explains what personal data WorkTogether collects, how we use and protect it, and what choices you have. It applies to the worktogether website and API. We collect only the data needed to run a student team-matching platform — we do not sell personal data and we do not show ads.",
+      "The operator identified above is the controller of personal data processed through the WorkTogether website and API. We collect data needed for an adult collaboration platform, do not sell personal data and do not use it for behavioural advertising.",
     sections: [
       {
         heading: "1. Data we collect",
@@ -675,7 +892,9 @@ export const en: SiteMessages = {
       },
       {
         heading: "2. How we use your data",
-        body: ["We use the data solely to operate and improve the service:"],
+        body: [
+          "We process account, project, application and communication data to perform the service contract; security, anti-abuse and reliability data for our legitimate interests; optional imports and push after your action or consent; and records needed to comply with law.",
+        ],
         bullets: [
           "to create and authenticate your account (email confirmation, login sessions);",
           "to show your public profile and projects to other users — the core matching feature;",
@@ -692,8 +911,8 @@ export const en: SiteMessages = {
         ],
         bullets: [
           "wt_refresh — an HttpOnly cookie holding your refresh token; Secure in production, scoped to the auth API path, lifetime 14 days, and rotated on every session refresh. SameSite is Lax for same-site hosting and None only when the frontend and API must operate across sites.",
-          "wt_locale — remembers your interface language (EN/UK).",
-          "Browser localStorage — keeps only your theme preference (light/dark).",
+          "wt_locale — remembers your interface language (EN/UK/PL).",
+          "Browser localStorage keeps your theme preference and versioned unsent project, application and message drafts for up to 30 days. A draft is removed after a successful send or explicit discard. Attached files are not stored there and must be selected again.",
           "The short-lived access token is kept only in JavaScript memory and is not written to localStorage or sessionStorage.",
         ],
       },
@@ -711,7 +930,7 @@ export const en: SiteMessages = {
       {
         heading: "5. Security",
         body: [
-          "We apply industry-standard safeguards: passwords hashed with bcrypt; short-lived access tokens (15 minutes); refresh tokens delivered only in an HttpOnly cookie and stored server-side as SHA-256 hashes in Redis with automatic expiry; TLS encryption in production; and origin checks against cross-site request forgery.",
+          "We apply industry-standard safeguards: passwords hashed with bcrypt; short-lived access tokens (15 minutes); refresh tokens delivered only in an HttpOnly cookie and stored server-side as SHA-256 hashes in SQL session records with automatic expiry; TLS encryption in production; and origin checks against cross-site request forgery.",
           "No system is 100% secure, but we design so that a breach of any single layer exposes as little as possible.",
         ],
       },
@@ -719,17 +938,18 @@ export const en: SiteMessages = {
         heading: "6. Data retention",
         body: ["We keep data only as long as it is needed:"],
         bullets: [
-          "Account, profile, and activity data — while your account exists.",
+          "Account and profile data — while the account exists, followed by a 30-day deletion grace period and then deletion or anonymisation unless a documented legal or safety exception applies.",
           "Refresh-token hashes — at most 14 days, removed on logout or rotation.",
           "Email-confirmation tokens — 24 hours.",
-          "Request logs and metrics — short-term, for operations and security.",
+          "Local browser drafts — up to 30 days, unless submitted or discarded earlier.",
+          "Reports, sanctions, audit and outbox records — only for the documented security, evidence and operational period; exact production periods must be approved before launch and enforced by scheduled deletion.",
         ],
       },
       {
         heading: "7. Sharing and processors",
         body: [
           "We do not sell or rent personal data, and we do not share it with advertisers.",
-          "Data is processed on our hosting infrastructure and by an email delivery provider (to send confirmation and application-status emails). These providers process data only on our instructions. We may disclose data if required by law or to protect the rights and safety of users.",
+          "Data may be processed by contracted hosting, database, storage, email, observability, OAuth and web-push providers only as needed. If data leaves the EEA, we use an adequacy decision or another valid safeguard such as standard contractual clauses. The actual provider list and processing regions must be verified before publication.",
         ],
       },
       {
@@ -737,15 +957,15 @@ export const en: SiteMessages = {
         body: ["You control your data:"],
         bullets: [
           "View and edit your profile at any time on the profile page.",
-          "Withdraw pending applications and delete projects you own when they have no pending or accepted applications; deletion also removes their positions and remaining application history.",
-          "Request a copy or full deletion of your account data by writing to support@worktogether.app — we action such requests within 30 days.",
-          "Depending on your jurisdiction (e.g. GDPR), you may also have rights to restrict or object to processing and to lodge a complaint with a supervisory authority.",
+          "Withdraw eligible pending applications and archive or delete eligible projects. Accepted membership, decisions and contribution history can remain in a minimised or anonymised form so other team records do not become false.",
+          "Request access, rectification, erasure, restriction, portability or object to processing by writing to support@worktogether.app. We respond without undue delay and normally within one month; GDPR permits an extension in complex cases with timely notice.",
+          "You may lodge a complaint with the President of the Polish Personal Data Protection Office (UODO) at https://uodo.gov.pl/ or another competent supervisory authority.",
         ],
       },
       {
         heading: "9. Children",
         body: [
-          "The service is intended for users aged 16 and older. We do not knowingly collect data from children under 16; if we learn that we have, we will delete the account and its data.",
+          "The service is intended for adults aged 18 and older. We do not knowingly collect data from children; if we learn that we have, we will restrict the account and delete or lawfully retain the data as appropriate.",
         ],
       },
       {
@@ -760,4 +980,5 @@ export const en: SiteMessages = {
       },
     ],
   },
+  ...enPolicyMessages,
 };

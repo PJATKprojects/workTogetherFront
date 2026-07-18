@@ -19,7 +19,11 @@ export default async function ProfilePage({ params }: { params: Promise<{ locale
       <SiteHeader locale={locale} nav={t.nav} />
       <Suspense fallback={<div className="min-h-[50vh]" />}>
         <AuthGuard locale={locale} loadingLabel={t.common.loading}>
-          <main className="mx-auto w-full max-w-6xl px-4 py-12 sm:px-6 sm:py-16">
+          <main
+            id="main-content"
+            tabIndex={-1}
+            className="mx-auto w-full max-w-6xl px-4 py-12 sm:px-6 sm:py-16"
+          >
             <section className="rounded-3xl border border-border bg-surface/75 p-6 sm:p-10">
               <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
                 <div>

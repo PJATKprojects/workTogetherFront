@@ -17,7 +17,11 @@ export default async function NewProjectPage({ params }: { params: Promise<{ loc
       <SiteHeader locale={raw} nav={t.nav} />
       <Suspense fallback={<div className="min-h-[50vh]" />}>
         <AuthGuard locale={raw} loadingLabel={t.common.loading}>
-          <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-10 sm:px-6 sm:py-14">
+          <main
+            id="main-content"
+            tabIndex={-1}
+            className="mx-auto w-full max-w-4xl flex-1 px-4 py-10 sm:px-6 sm:py-14"
+          >
             <BackLink href={`/${raw}/projects`} label={t.common.back} />
             <h1 className="text-3xl font-semibold tracking-tight">{t.projects.newTitle}</h1>
             <p className="mt-2 mb-7 text-muted-foreground">{t.projects.newSubtitle}</p>

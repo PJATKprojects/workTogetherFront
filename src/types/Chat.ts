@@ -20,9 +20,12 @@ export interface ChatMessage {
   id: number;
   conversationId: number;
   senderId: number;
+  clientRequestId: string | null;
   sender: ChatUser;
   body: string;
   sentAt: string;
+  deliveredAt: string | null;
+  readAt: string | null;
   attachments: ChatAttachment[];
 }
 
@@ -42,6 +45,7 @@ export interface CreateChatAttachment {
 }
 
 export interface SendChatMessagePayload {
+  clientRequestId?: string;
   body: string;
   attachments: CreateChatAttachment[];
 }
@@ -58,6 +62,9 @@ export interface Conversation {
   lastMessageAt: string;
   unreadCount: number;
   personalNote: string | null;
+  requestStatus: "pending" | "active" | "declined";
+  requestedByUserId: number | null;
+  requestedAt: string | null;
 }
 
 export interface ConversationFilters {
@@ -67,12 +74,14 @@ export interface ConversationFilters {
 }
 
 export interface CreateGroupConversationPayload {
+  clientRequestId?: string;
   title: string;
   participantUserIds: number[];
   message: string;
 }
 
 export interface StartConversationPayload {
+  clientRequestId?: string;
   recipientUserId: number;
   contextType: ChatContextType;
   contextId: number;

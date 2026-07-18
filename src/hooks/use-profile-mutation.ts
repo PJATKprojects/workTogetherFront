@@ -14,6 +14,7 @@ export function useProfileMutation() {
     mutationFn: userService.updateProfile,
     onSuccess: async (profile) => {
       queryClient.setQueryData(queryKeys.users.me(), profile);
+      await queryClient.invalidateQueries({ queryKey: queryKeys.onboarding.all });
       await refreshSession();
     },
   });

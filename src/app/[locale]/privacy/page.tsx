@@ -5,6 +5,7 @@ import { LegalArticle } from "@/components/legal/legal-article";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { getMessages, isLocale } from "@/i18n/config";
+import { getLegalIdentity } from "@/lib/legal-config";
 
 type Props = Readonly<{ params: Promise<{ locale: string }> }>;
 
@@ -25,8 +26,8 @@ export default async function PrivacyPage({ params }: Props) {
   return (
     <div className="flex min-h-full flex-col text-foreground">
       <SiteHeader locale={locale} nav={t.nav} />
-      <main className="flex-1">
-        <LegalArticle doc={t.privacy} shared={t.legal} />
+      <main id="main-content" tabIndex={-1} className="flex-1">
+        <LegalArticle doc={t.privacy} shared={t.legal} identity={getLegalIdentity()} />
       </main>
       <SiteFooter footer={t.footer} locale={locale} />
     </div>

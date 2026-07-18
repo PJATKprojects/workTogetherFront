@@ -20,15 +20,15 @@ A concise overview of how the frontend is structured and how to change it safely
 
 ### Languages and URLs
 
-- Supported locales: **`en`** (default site language), **`uk`**.
-- User-facing routes live under **`/en/...`** and **`/uk/...`**.
+- Supported locales: **`en`** (default site language), **`uk`**, **`pl`**.
+- User-facing routes live under **`/en/...`**, **`/uk/...`**, and **`/pl/...`**.
 - **`src/proxy.ts`**: paths without a locale prefix redirect to **`/en`** + the same path (`defaultLocale`).
 
 ### Where copy lives
 
-- **`src/messages/types.ts`** — single typed shape for all keys (`SiteMessages`). When adding copy, extend the type first, then **`en.ts`** and **`uk.ts`**.
+- **`src/messages/types.ts`** — single typed shape for all keys (`SiteMessages`). When adding copy, extend the type first, then **`en.ts`**, **`uk.ts`**, and **`pl.ts`**.
 - **`src/messages/en.ts`** — canonical English strings (source of truth for key semantics).
-- **`src/messages/uk.ts`** — Ukrainian translation with the same keys.
+- **`src/messages/uk.ts`** and **`src/messages/pl.ts`** — complete translations with the same keys.
 
 ### Using messages in code
 
@@ -65,7 +65,7 @@ A concise overview of how the frontend is structured and how to change it safely
 ## Site header
 
 - **`SiteHeader`** (`src/components/site-header.tsx`): logo left; **Projects** and **How it works** centered with absolute positioning from **`md`**; right cluster: login / sign up / language / theme (in that order).
-- Language: **`NavbarLocaleMenu`** — compact dropdown labels **EN** / **UA**.
+- Language: **`NavbarLocaleMenu`** — compact dropdown labels **EN** / **UA** / **PL**.
 - Do not reintroduce arbitrary **`min-width`** on login/sign-up unless design explicitly requires it.
 
 ## Other areas

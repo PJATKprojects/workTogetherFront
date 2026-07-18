@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { NewChatDialog } from "@/components/chat/new-chat-dialog";
+import { ReportDialog } from "@/components/moderation/report-dialog";
 import { GroupManagementDialog } from "@/components/chat/group-management-dialog";
 import { PersonalNoteEditor } from "@/components/chat/personal-note-editor";
 import { Button } from "@/components/ui/button";
@@ -18,17 +19,30 @@ import {
   useChatMessagesQuery,
   useConversationsQuery,
   useMarkConversationRead,
+  useResolveConversationRequest,
   useSendChatMessage,
 } from "@/hooks/use-chat";
 import { useAuth } from "@/hooks/use-auth";
-import type { Locale } from "@/i18n/locales";
+import { localText, type Locale } from "@/i18n/locales";
 import { withLocale } from "@/i18n/paths";
 import { getApiError } from "@/lib/api-error";
 import { chatContextHref, chatContextLabel } from "@/lib/chat-context";
 import { resolveFileUrl } from "@/lib/files";
+import { intlLocale } from "@/lib/format";
+import { readLocalDraft, removeLocalDraft, writeLocalDraft } from "@/lib/local-draft";
 import type { SiteMessages } from "@/messages/types";
 import { fileService } from "@/services/fileService";
 import type { ChatAttachment, Conversation } from "@/types";
+import { useRealtime } from "@/components/realtime-provider";
+
+type ChatLocalDraft = {
+  clientRequestId: string;
+  body: string;
+  hadPendingFiles: boolean;
+};
+
+const chatDraftVersion = 1;
+const chatDraftMaxAge = 30 * 24 * 60 * 60 * 1000;
 
 export function MessageCenter({
   locale,
@@ -58,7 +72,11 @@ export function MessageCenter({
   const thread = useChatMessagesQuery(activeId);
   const markRead = useMarkConversationRead();
   const sendMessage = useSendChatMessage(activeId);
+  const resolveRequest = useResolveConversationRequest();
+  const realtime = useRealtime();
   const [draft, setDraft] = useState("");
+  const [clientRequestId, setClientRequestId] = useState(() => crypto.randomUUID());
+  const [draftRestoreNotice, setDraftRestoreNotice] = useState("");
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
   const [uploadingAttachments, setUploadingAttachments] = useState(false);
   const [error, setError] = useState("");
@@ -71,6 +89,69 @@ export function MessageCenter({
     [thread.data]
   );
   const latestMessageId = chatMessages.at(-1)?.id;
+  const activeDraftKey =
+    user && activeId > 0 ? `wt:draft:chat:user:${user.id}:conversation:${activeId}` : null;
+  const hydratedDraftKey = useRef<string | null>(null);
+
+  const persistChatDraft = useCallback(() => {
+    if (!activeDraftKey || !clientRequestId) return;
+    if (!draft.trim() && pendingFiles.length === 0) {
+      removeLocalDraft(activeDraftKey);
+      return;
+    }
+    writeLocalDraft<ChatLocalDraft>(activeDraftKey, chatDraftVersion, {
+      clientRequestId,
+      body: draft,
+      hadPendingFiles: pendingFiles.length > 0,
+    });
+  }, [activeDraftKey, clientRequestId, draft, pendingFiles]);
+
+  useEffect(() => {
+    if (!activeDraftKey || hydratedDraftKey.current === activeDraftKey) return;
+    const stored = readLocalDraft<unknown>(activeDraftKey, chatDraftVersion, chatDraftMaxAge);
+    const timer = window.setTimeout(() => {
+      if (hydratedDraftKey.current === activeDraftKey) return;
+      hydratedDraftKey.current = activeDraftKey;
+      setPendingFiles([]);
+      if (!isChatLocalDraft(stored)) {
+        setDraft("");
+        setClientRequestId(crypto.randomUUID());
+        setDraftRestoreNotice("");
+        return;
+      }
+      setDraft(stored.body);
+      setClientRequestId(stored.clientRequestId);
+      setDraftRestoreNotice(
+        stored.hadPendingFiles
+          ? localText(
+              locale,
+              "Message restored. Reattach files before sending.",
+              "Повідомлення відновлено. Прикріпіть файли знову перед надсиланням.",
+              "Przywrócono wiadomość. Przed wysłaniem ponownie dodaj pliki."
+            )
+          : localText(
+              locale,
+              "Your unsent message was restored.",
+              "Ваше ненадіслане повідомлення відновлено.",
+              "Przywrócono niewysłaną wiadomość."
+            )
+      );
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, [activeDraftKey, locale]);
+
+  useEffect(() => {
+    if (!activeDraftKey || hydratedDraftKey.current !== activeDraftKey || !clientRequestId) {
+      return;
+    }
+    const persist = () => persistChatDraft();
+    const timer = window.setTimeout(persist, 400);
+    window.addEventListener("pagehide", persist);
+    return () => {
+      window.clearTimeout(timer);
+      window.removeEventListener("pagehide", persist);
+    };
+  }, [activeDraftKey, clientRequestId, persistChatDraft]);
 
   useEffect(() => {
     if (active?.unreadCount && thread.data) markRead.mutate(active.id);
@@ -79,6 +160,10 @@ export function MessageCenter({
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
   }, [activeId, latestMessageId]);
+
+  useEffect(() => {
+    if (activeId > 0) void realtime.joinConversation(activeId);
+  }, [activeId, realtime]);
 
   if (conversations.isLoading) return <LoadingSkeleton count={3} />;
   if (conversations.isError) {
@@ -92,10 +177,11 @@ export function MessageCenter({
   }
 
   const openConversation = (conversationId: number) => {
+    persistChatDraft();
     setSelectedConversationId(conversationId);
     setGroupSettingsOpen(false);
-    setDraft("");
     setPendingFiles([]);
+    setDraftRestoreNotice("");
     setError("");
     router.replace(
       `${withLocale(locale, "/messages")}?conversation=${conversationId}&chatPage=${conversationPage}`,
@@ -119,8 +205,15 @@ export function MessageCenter({
           };
         })
       );
-      await sendMessage.mutateAsync({ body: draft.trim(), attachments });
+      await sendMessage.mutateAsync({
+        clientRequestId,
+        body: draft.trim(),
+        attachments,
+      });
+      if (activeDraftKey) removeLocalDraft(activeDraftKey);
       setDraft("");
+      setClientRequestId(crypto.randomUUID());
+      setDraftRestoreNotice("");
       setPendingFiles([]);
       if (fileInputRef.current) fileInputRef.current.value = "";
     } catch (reason) {
@@ -314,7 +407,7 @@ export function MessageCenter({
                   return (
                     <div
                       key={message.id}
-                      className={`flex ${mine ? "justify-end" : "justify-start"}`}
+                      className={`flex items-end gap-1 ${mine ? "justify-end" : "justify-start"}`}
                     >
                       <div
                         className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-sm shadow-sm sm:max-w-[72%] ${
@@ -329,7 +422,11 @@ export function MessageCenter({
                           </p>
                         ) : null}
                         {message.attachments.length ? (
-                          <MessageAttachments attachments={message.attachments} mine={mine} />
+                          <MessageAttachments
+                            attachments={message.attachments}
+                            mine={mine}
+                            locale={locale}
+                          />
                         ) : null}
                         {message.body ? (
                           <p
@@ -346,8 +443,30 @@ export function MessageCenter({
                           }`}
                         >
                           {formatMessageTime(message.sentAt, locale)}
+                          {mine
+                            ? ` · ${
+                                message.readAt
+                                  ? localText(locale, "✓✓ read", "✓✓ прочитано", "✓✓ przeczytano")
+                                  : message.deliveredAt
+                                    ? localText(
+                                        locale,
+                                        "✓ delivered",
+                                        "✓ доставлено",
+                                        "✓ dostarczono"
+                                      )
+                                    : localText(locale, "✓ sent", "✓ надіслано", "✓ wysłano")
+                              }`
+                            : ""}
                         </p>
                       </div>
+                      {!mine ? (
+                        <ReportDialog
+                          targetType="message"
+                          targetId={message.id}
+                          locale={locale}
+                          className="!border-0 !px-2 !py-1 text-[10px] text-muted-foreground"
+                        />
+                      ) : null}
                     </div>
                   );
                 })}
@@ -355,102 +474,167 @@ export function MessageCenter({
               </div>
             </div>
 
-            <form
-              className="border-t border-border bg-surface p-4"
-              onSubmit={(event) => {
-                event.preventDefault();
-                void send();
-              }}
-            >
-              {pendingFiles.length ? (
-                <div className="mb-3 flex gap-2 overflow-x-auto pb-1">
-                  {pendingFiles.map((file, index) => (
-                    <div
-                      key={`${file.name}:${file.size}:${file.lastModified}`}
-                      className="flex max-w-52 shrink-0 items-center gap-2 rounded-xl border border-border bg-muted px-3 py-2"
-                    >
-                      <FileTypeIcon image={file.type.startsWith("image/")} />
-                      <span className="min-w-0 flex-1">
-                        <span className="block truncate text-xs font-semibold">{file.name}</span>
-                        <span className="block text-[10px] text-muted-foreground">
-                          {formatFileSize(file.size)}
+            {active.requestStatus === "active" ? (
+              <form
+                className="border-t border-border bg-surface p-4"
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  void send();
+                }}
+              >
+                {pendingFiles.length ? (
+                  <div className="mb-3 flex gap-2 overflow-x-auto pb-1">
+                    {pendingFiles.map((file, index) => (
+                      <div
+                        key={`${file.name}:${file.size}:${file.lastModified}`}
+                        className="flex max-w-52 shrink-0 items-center gap-2 rounded-xl border border-border bg-muted px-3 py-2"
+                      >
+                        <FileTypeIcon image={file.type.startsWith("image/")} />
+                        <span className="min-w-0 flex-1">
+                          <span className="block truncate text-xs font-semibold">{file.name}</span>
+                          <span className="block text-[10px] text-muted-foreground">
+                            {formatFileSize(file.size)}
+                          </span>
                         </span>
-                      </span>
-                      <button
+                        <button
+                          type="button"
+                          aria-label={labels.removeAttachment}
+                          className="focus-ring grid size-6 shrink-0 place-items-center rounded-full text-muted-foreground hover:bg-surface hover:text-foreground"
+                          disabled={sending}
+                          onClick={() =>
+                            setPendingFiles((current) =>
+                              current.filter((_, fileIndex) => fileIndex !== index)
+                            )
+                          }
+                        >
+                          ×
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                ) : null}
+                <div className="flex items-end gap-3">
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    multiple
+                    className="sr-only"
+                    accept=".png,.jpg,.jpeg,.webp,.gif,.pdf,.docx,.txt,.csv,.xlsx,.pptx"
+                    onChange={(event) => {
+                      const selected = Array.from(event.target.files ?? []);
+                      setPendingFiles((current) => {
+                        if (current.length + selected.length > 10) {
+                          setError(labels.attachmentLimit);
+                        }
+                        return [...current, ...selected].slice(0, 10);
+                      });
+                    }}
+                  />
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="secondary"
+                    className="size-11 shrink-0 px-0"
+                    aria-label={labels.addAttachment}
+                    title={labels.addAttachment}
+                    disabled={sending || pendingFiles.length >= 10}
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    <PaperclipIcon />
+                  </Button>
+                  <Textarea
+                    value={draft}
+                    maxLength={4000}
+                    rows={2}
+                    placeholder={labels.messagePlaceholder}
+                    className="min-h-11 resize-none"
+                    style={{ resize: "none" }}
+                    disabled={sending}
+                    onChange={(event) => setDraft(event.target.value)}
+                    onFocus={() => void realtime.sendTyping(activeId, true)}
+                    onBlur={() => void realtime.sendTyping(activeId, false)}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter" && !event.shiftKey) {
+                        event.preventDefault();
+                        void send();
+                      }
+                    }}
+                  />
+                  <Button
+                    type="submit"
+                    disabled={(!draft.trim() && pendingFiles.length === 0) || sending}
+                  >
+                    {uploadingAttachments
+                      ? labels.uploadingAttachments
+                      : sendMessage.isPending
+                        ? labels.sending
+                        : labels.send}
+                  </Button>
+                </div>
+                {draftRestoreNotice ? (
+                  <p className="mt-2 text-xs font-medium text-success" role="status">
+                    {draftRestoreNotice}
+                  </p>
+                ) : null}
+                {error ? <p className="mt-2 text-sm text-destructive">{error}</p> : null}
+              </form>
+            ) : (
+              <div className="border-t border-border bg-surface p-4 text-sm">
+                {active.requestStatus === "pending" && active.requestedByUserId !== user?.id ? (
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <p>
+                      {localText(
+                        locale,
+                        "This is a new conversation request. Accept it before replying.",
+                        "Це запит на нову розмову. Прийміть його, перш ніж відповідати.",
+                        "To prośba o nową rozmowę. Zaakceptuj ją przed udzieleniem odpowiedzi."
+                      )}
+                    </p>
+                    <div className="flex gap-2">
+                      <Button
                         type="button"
-                        aria-label={labels.removeAttachment}
-                        className="focus-ring grid size-6 shrink-0 place-items-center rounded-full text-muted-foreground hover:bg-surface hover:text-foreground"
-                        disabled={sending}
                         onClick={() =>
-                          setPendingFiles((current) =>
-                            current.filter((_, fileIndex) => fileIndex !== index)
-                          )
+                          void resolveRequest.mutateAsync({
+                            conversationId: active.id,
+                            decision: "accepted",
+                          })
                         }
                       >
-                        ×
-                      </button>
+                        {localText(locale, "Accept", "Прийняти", "Akceptuj")}
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="danger"
+                        onClick={() =>
+                          void resolveRequest.mutateAsync({
+                            conversationId: active.id,
+                            decision: "declined",
+                          })
+                        }
+                      >
+                        {localText(locale, "Decline", "Відхилити", "Odrzuć")}
+                      </Button>
                     </div>
-                  ))}
-                </div>
-              ) : null}
-              <div className="flex items-end gap-3">
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  multiple
-                  className="sr-only"
-                  accept=".png,.jpg,.jpeg,.webp,.gif,.pdf,.doc,.docx,.txt,.csv,.xls,.xlsx,.ppt,.pptx,.zip,.rar,.7z"
-                  onChange={(event) => {
-                    const selected = Array.from(event.target.files ?? []);
-                    setPendingFiles((current) => {
-                      if (current.length + selected.length > 10) {
-                        setError(labels.attachmentLimit);
-                      }
-                      return [...current, ...selected].slice(0, 10);
-                    });
-                  }}
-                />
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="secondary"
-                  className="size-11 shrink-0 px-0"
-                  aria-label={labels.addAttachment}
-                  title={labels.addAttachment}
-                  disabled={sending || pendingFiles.length >= 10}
-                  onClick={() => fileInputRef.current?.click()}
-                >
-                  <PaperclipIcon />
-                </Button>
-                <Textarea
-                  value={draft}
-                  maxLength={4000}
-                  rows={2}
-                  placeholder={labels.messagePlaceholder}
-                  className="min-h-11 resize-none"
-                  style={{ resize: "none" }}
-                  disabled={sending}
-                  onChange={(event) => setDraft(event.target.value)}
-                  onKeyDown={(event) => {
-                    if (event.key === "Enter" && !event.shiftKey) {
-                      event.preventDefault();
-                      void send();
-                    }
-                  }}
-                />
-                <Button
-                  type="submit"
-                  disabled={(!draft.trim() && pendingFiles.length === 0) || sending}
-                >
-                  {uploadingAttachments
-                    ? labels.uploadingAttachments
-                    : sendMessage.isPending
-                      ? labels.sending
-                      : labels.send}
-                </Button>
+                  </div>
+                ) : (
+                  <p className="text-muted-foreground">
+                    {active.requestStatus === "pending"
+                      ? localText(
+                          locale,
+                          "Waiting for the recipient to accept this request.",
+                          "Очікуємо, поки користувач прийме запит.",
+                          "Czekamy, aż odbiorca zaakceptuje prośbę."
+                        )
+                      : localText(
+                          locale,
+                          "This conversation request was declined.",
+                          "Запит на розмову відхилено.",
+                          "Prośba o rozmowę została odrzucona."
+                        )}
+                  </p>
+                )}
               </div>
-              {error ? <p className="mt-2 text-sm text-destructive">{error}</p> : null}
-            </form>
+            )}
           </section>
         ) : (
           <div className="grid place-items-center p-8 text-center text-sm text-muted-foreground">
@@ -493,6 +677,20 @@ export function MessageCenter({
         />
       ) : null}
     </>
+  );
+}
+
+function isChatLocalDraft(value: unknown): value is ChatLocalDraft {
+  if (!value || typeof value !== "object") return false;
+  const draft = value as Partial<ChatLocalDraft>;
+  return (
+    typeof draft.clientRequestId === "string" &&
+    /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/iu.test(
+      draft.clientRequestId
+    ) &&
+    typeof draft.body === "string" &&
+    draft.body.length <= 4000 &&
+    typeof draft.hadPendingFiles === "boolean"
   );
 }
 
@@ -567,7 +765,7 @@ function formatMessageTime(value: string, locale: Locale) {
   const today = new Date();
   const sameDay = date.toDateString() === today.toDateString();
   return new Intl.DateTimeFormat(
-    locale === "uk" ? "uk-UA" : "en-US",
+    intlLocale(locale),
     sameDay ? { hour: "2-digit", minute: "2-digit" } : { month: "short", day: "numeric" }
   ).format(date);
 }
@@ -575,7 +773,8 @@ function formatMessageTime(value: string, locale: Locale) {
 function MessageAttachments({
   attachments,
   mine,
-}: Readonly<{ attachments: ChatAttachment[]; mine: boolean }>) {
+  locale,
+}: Readonly<{ attachments: ChatAttachment[]; mine: boolean; locale: Locale }>) {
   const images = attachments.filter((attachment) => attachment.contentType.startsWith("image/"));
   const files = attachments.filter((attachment) => !attachment.contentType.startsWith("image/"));
 
@@ -635,6 +834,19 @@ function MessageAttachments({
           </span>
         </a>
       ))}
+      {!mine && attachments.length ? (
+        <div className="flex flex-wrap gap-1">
+          {attachments.map((attachment) => (
+            <ReportDialog
+              key={`report-${attachment.id}`}
+              targetType="attachment"
+              targetId={attachment.id}
+              locale={locale}
+              className="!border-0 !px-1.5 !py-0.5 text-[9px] opacity-75"
+            />
+          ))}
+        </div>
+      ) : null}
     </div>
   );
 }

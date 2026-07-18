@@ -17,7 +17,11 @@ export default async function MessagesPage({ params }: { params: Promise<{ local
       <SiteHeader locale={raw} nav={t.nav} />
       <Suspense fallback={<div className="min-h-[60vh]" />}>
         <AuthGuard locale={raw} loadingLabel={t.common.loading}>
-          <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8 sm:px-6 sm:py-10">
+          <main
+            id="main-content"
+            tabIndex={-1}
+            className="mx-auto w-full max-w-6xl flex-1 px-4 py-8 sm:px-6 sm:py-10"
+          >
             <MessageCenter locale={raw} messages={t} />
           </main>
         </AuthGuard>

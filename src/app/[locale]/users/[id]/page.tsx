@@ -26,7 +26,11 @@ export default async function PublicUserPage({ params }: Props) {
   return (
     <div className="flex min-h-full flex-col text-foreground">
       <SiteHeader locale={locale} nav={t.nav} />
-      <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-10 sm:px-6 sm:py-14">
+      <main
+        id="main-content"
+        tabIndex={-1}
+        className="mx-auto w-full max-w-4xl flex-1 px-4 py-10 sm:px-6 sm:py-14"
+      >
         <BackLink href={`/${locale}/students`} label={t.common.back} />
         <PublicProfileView userId={userId} locale={locale} messages={t} />
       </main>

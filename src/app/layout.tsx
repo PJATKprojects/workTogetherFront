@@ -5,6 +5,8 @@ import { AppQueryProvider } from "@/components/app-query-provider";
 import { AppThemeProvider } from "@/components/app-theme-provider";
 import { AuthProvider } from "@/components/auth/auth-provider";
 import { defaultLocale } from "@/i18n/config";
+import { RealtimeProvider } from "@/components/realtime-provider";
+import { AchievementCelebration } from "@/components/achievement-celebration";
 
 import "./globals.css";
 
@@ -24,6 +26,8 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "WorkTogether",
   description: "Teams for your projects.",
+  applicationName: "WorkTogether",
+  manifest: "/manifest.webmanifest",
 };
 
 const apiOrigin = process.env.NEXT_PUBLIC_API_URL;
@@ -48,7 +52,10 @@ export default function RootLayout({
       <body className="flex min-h-full flex-col font-sans" suppressHydrationWarning>
         <AppThemeProvider>
           <AppQueryProvider>
-            <AuthProvider>{children}</AuthProvider>
+            <AuthProvider>
+              <AchievementCelebration />
+              <RealtimeProvider>{children}</RealtimeProvider>
+            </AuthProvider>
           </AppQueryProvider>
         </AppThemeProvider>
       </body>

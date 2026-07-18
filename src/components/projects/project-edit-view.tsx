@@ -59,6 +59,7 @@ export function ProjectEditView({
         {showAdd ? (
           <div className="mt-4">
             <PositionForm
+              locale={locale}
               labels={messages.projects}
               common={messages.common}
               errors={messages.errors}
@@ -150,6 +151,7 @@ function EditablePosition({
       {editing ? (
         <div className="mt-3">
           <PositionForm
+            locale={locale}
             initial={position}
             labels={messages.projects}
             common={messages.common}

@@ -28,7 +28,20 @@ function persistLocale(response: NextResponse, locale: Locale) {
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  if (pathname.startsWith("/_next") || pathname.startsWith("/api") || PUBLIC_FILE.test(pathname)) {
+  if (pathname.startsWith("/api")) {
+    const proxySecret = process.env.API_PROXY_SECRET;
+    if (!proxySecret) {
+      if (process.env.API_PROXY_TARGET) {
+        return NextResponse.json({ message: "The API proxy is not configured." }, { status: 503 });
+      }
+      return NextResponse.next();
+    }
+    const requestHeaders = new Headers(request.headers);
+    requestHeaders.set("X-WorkTogether-Proxy-Key", proxySecret);
+    return NextResponse.next({ request: { headers: requestHeaders } });
+  }
+
+  if (pathname.startsWith("/_next") || PUBLIC_FILE.test(pathname)) {
     return NextResponse.next();
   }
 
@@ -47,5 +60,5 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!_next|_vercel|api|.*\\..*).*)"],
+  matcher: ["/api/:path*", "/((?!_next|_vercel|api|.*\\..*).*)"],
 };

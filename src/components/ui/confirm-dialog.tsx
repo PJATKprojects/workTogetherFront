@@ -1,3 +1,7 @@
+"use client";
+
+import { useDialogFocus } from "@/hooks/use-dialog-focus";
+
 import { Button } from "./button";
 
 export function ConfirmDialog({
@@ -19,6 +23,8 @@ export function ConfirmDialog({
   onConfirm: () => void;
   onCancel: () => void;
 }>) {
+  const dialogRef = useDialogFocus<HTMLDivElement>(open, pending ? () => undefined : onCancel);
+
   if (!open) return null;
   return (
     <div
@@ -26,9 +32,11 @@ export function ConfirmDialog({
       onClick={pending ? undefined : onCancel}
     >
       <div
+        ref={dialogRef}
         role="alertdialog"
         aria-modal="true"
         aria-labelledby="confirm-dialog-title"
+        tabIndex={-1}
         onClick={(event) => event.stopPropagation()}
         className="login-fade-up glass-panel w-full max-w-md rounded-3xl p-6"
       >
@@ -36,7 +44,13 @@ export function ConfirmDialog({
           {title}
         </h2>
         <div className="mt-6 flex justify-end gap-3">
-          <Button type="button" variant="ghost" disabled={pending} onClick={onCancel}>
+          <Button
+            type="button"
+            variant="ghost"
+            disabled={pending}
+            onClick={onCancel}
+            data-dialog-initial-focus
+          >
             {cancelLabel}
           </Button>
           <Button

@@ -1,12 +1,35 @@
 import type { PaginationParams } from "./Common";
-import type { ProjectStatus, Role, Technology } from "./Lookup";
+import type { Role, Technology } from "./Lookup";
 import type { UserListItem } from "./User";
+
+export type ProjectHealth = "active" | "slow" | "paused" | "completed" | "abandoned";
+export type ProjectStage = "idea" | "prototype" | "mvp" | "growth";
+export type ProjectFormat = "remote" | "local" | "hybrid";
+export type PositionLevel = "beginner" | "intermediate" | "advanced" | "any";
+
+export type ProjectQualitySuggestion =
+  | "problem"
+  | "expectedOutcome"
+  | "logistics"
+  | "timezone"
+  | "languages"
+  | "positions"
+  | "tasks"
+  | "mustHave"
+  | "level";
 
 export interface ProjectListItem {
   id: number;
   projectName: string;
-  description: string;
-  status: ProjectStatus;
+  problem: string;
+  expectedOutcome: string;
+  stage: ProjectStage;
+  format: ProjectFormat;
+  duration: string;
+  hoursPerWeek: number | null;
+  timeZone: string;
+  teamLanguages: string[];
+  projectLink: string | null;
   createdAt: string;
   owner: Pick<UserListItem, "id" | "userName">;
   openPositionsCount: number;
@@ -15,68 +38,102 @@ export interface ProjectListItem {
   pendingApplicationsCount: number;
   isRecruitmentClosed: boolean;
   isHidden: boolean;
-  technologies: string[];
+  archivedAt: string | null;
+  healthStatus: ProjectHealth;
+  lastActivityAt: string;
+  lastOwnerActivityAt: string;
+  qualityScore: number | null;
 }
 
 export interface ProjectPosition {
   id: number;
   role: Role;
-  description: string | null;
-  requirements: string | null;
+  tasks: string;
+  mustHave: Technology[];
+  niceToHave: Technology[];
+  level: PositionLevel;
   isFilled: boolean;
-  technologies: Technology[];
+  lastOwnerActivityAt: string;
+  freshnessReviewRequiredAt: string | null;
   applicationsCount: number;
-  /** True when the current user already applied to this position (v1.3). */
   hasApplied: boolean;
 }
 
-export interface ProjectDetail {
-  id: number;
-  projectName: string;
-  description: string;
-  /** Sanitized rich-text HTML body (v1.3), null when not provided. */
-  fullDescription: string | null;
-  status: ProjectStatus;
-  createdAt: string;
+export interface ProjectDetail extends Omit<
+  ProjectListItem,
+  "owner" | "openPositionsCount" | "totalPositionsCount"
+> {
   owner: UserListItem;
   positions: ProjectPosition[];
   isOwner: boolean;
-  isRecruitmentClosed: boolean;
-  isHidden: boolean;
+  isMember: boolean;
+  teamMemberCount: number;
+  averageResponseHours: number | null;
+  completedAt: string | null;
+  outcome: string;
+  lessonsLearned: string;
+  freshnessReviewRequiredAt: string | null;
+  staleRecruitmentClosedAt: string | null;
+  qualitySuggestions: ProjectQualitySuggestion[];
+  changesSinceLastVisit: Array<{
+    type: "conditions" | "compensation" | "role" | "team";
+    field: string;
+    oldValue: string | null;
+    newValue: string | null;
+    createdAt: string;
+  }>;
 }
 
 export interface CreatePositionDto {
   roleId: number;
-  description?: string | null;
-  requirements?: string | null;
-  technologyIds: number[];
+  tasks: string;
+  mustHaveTechnologyIds: number[];
+  niceToHaveTechnologyIds: number[];
+  level: PositionLevel;
 }
 
 export interface UpdatePositionDto {
-  description?: string | null;
-  requirements?: string | null;
-  technologyIds: number[];
+  tasks: string;
+  mustHaveTechnologyIds: number[];
+  niceToHaveTechnologyIds: number[];
+  level: PositionLevel;
 }
 
-export interface CreateProjectDto {
-  projectName: string;
-  description: string;
-  fullDescription?: string | null;
+export interface ProjectWriteDto {
+  problem: string;
+  expectedOutcome: string;
+  stage: ProjectStage;
+  format: ProjectFormat;
+  duration: string;
+  hoursPerWeek?: number | null;
+  timeZone: string;
+  teamLanguages: string[];
+  projectLink?: string | null;
+}
+
+export interface CreateProjectDto extends ProjectWriteDto {
+  clientRequestId?: string;
   positions: CreatePositionDto[];
 }
 
-export interface UpdateProjectDto {
-  projectName: string;
-  description: string;
-  fullDescription?: string | null;
-  statusId: number;
+export interface UpdateProjectDto extends ProjectWriteDto {
+  healthStatus: ProjectHealth;
 }
 
 export interface ProjectFilters extends PaginationParams {
   search?: string;
-  statusId?: number;
   roleId?: number;
   technologyIds?: number[];
   hasOpenPositions?: boolean;
   sort?: string;
+  skillMode?: "and" | "or";
+  positionLevel?: PositionLevel;
+  utcOffsetMinutes?: number;
+  minimumOverlapHours?: number;
+  maxHoursPerWeek?: number;
+  language?: string;
+  format?: ProjectFormat;
+  stage?: ProjectStage;
+  healthStatus?: ProjectHealth;
+  activeWithinDays?: number;
 }

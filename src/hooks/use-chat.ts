@@ -16,7 +16,6 @@ export function useConversationsQuery(filters: ConversationFilters, enabled = tr
     queryKey: queryKeys.chat.conversations(filters),
     queryFn: () => chatService.getConversations(filters),
     enabled,
-    refetchInterval: 10_000,
   });
 }
 
@@ -28,7 +27,6 @@ export function useChatMessagesQuery(conversationId: number) {
     initialPageParam: 1,
     getNextPageParam: (lastPage) => (lastPage.hasNextPage ? lastPage.page + 1 : undefined),
     enabled: conversationId > 0,
-    refetchInterval: 5_000,
   });
 }
 
@@ -37,7 +35,6 @@ export function useChatUnreadCount(enabled: boolean) {
     queryKey: queryKeys.chat.unreadCount(),
     queryFn: chatService.getUnreadCount,
     enabled,
-    refetchInterval: 10_000,
   });
 }
 
@@ -48,6 +45,20 @@ export function useStartConversation() {
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: queryKeys.chat.all });
     },
+  });
+}
+
+export function useResolveConversationRequest() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      conversationId,
+      decision,
+    }: {
+      conversationId: number;
+      decision: "accepted" | "declined";
+    }) => chatService.resolveRequest(conversationId, decision),
+    onSuccess: async () => queryClient.invalidateQueries({ queryKey: queryKeys.chat.all }),
   });
 }
 
@@ -62,12 +73,12 @@ export function useCreateGroupConversation() {
   });
 }
 
-export function useChatUserSearch(email: string, enabled = true) {
-  const normalized = email.trim().toLowerCase();
+export function useChatUserSearch(username: string, enabled = true) {
+  const normalized = username.trim().toLowerCase();
   return useQuery({
     queryKey: queryKeys.chat.users(normalized),
     queryFn: () => chatService.searchUsers(normalized),
-    enabled: enabled && normalized.length >= 3,
+    enabled: enabled && normalized.length >= 2,
     staleTime: 30_000,
   });
 }

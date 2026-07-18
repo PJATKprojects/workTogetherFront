@@ -1,24 +1,32 @@
-FROM node:20-alpine AS deps
+FROM node:24-alpine AS deps
 WORKDIR /app
+ENV HUSKY=0
 COPY package*.json ./
 RUN npm ci
 
-FROM node:20-alpine AS builder
+FROM node:24-alpine AS prod-deps
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci --omit=dev --ignore-scripts
+
+FROM node:24-alpine AS builder
 WORKDIR /app
 ARG NEXT_PUBLIC_API_URL=http://localhost:8081
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+ENV NEXT_TELEMETRY_DISABLED=1
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN npm run build
 
-FROM node:20-alpine AS runner
+FROM node:24-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
 ARG NEXT_PUBLIC_API_URL=http://localhost:8081
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 
 COPY --from=builder /app/package*.json ./
-COPY --from=builder /app/node_modules ./node_modules
+COPY --from=prod-deps /app/node_modules ./node_modules
 COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/public ./public
 

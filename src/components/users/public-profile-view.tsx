@@ -5,6 +5,7 @@ import { useState } from "react";
 
 import { ChatLauncher } from "@/components/chat/chat-launcher";
 import { PersonalNoteEditor } from "@/components/chat/personal-note-editor";
+import { UserSafetyActions } from "@/components/moderation/user-safety-actions";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ErrorState } from "@/components/ui/error-state";
@@ -12,6 +13,7 @@ import { LoadingSkeleton } from "@/components/ui/loading-skeleton";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { useUserQuery } from "@/hooks/use-user-query";
 import type { Locale } from "@/i18n/locales";
+import { localText } from "@/i18n/locales";
 import { withLocale } from "@/i18n/paths";
 import { getApiError, getApiStatus } from "@/lib/api-error";
 import { formatDate } from "@/lib/format";
@@ -82,6 +84,25 @@ export function PublicProfileView({
             <p className="mt-1 text-sm text-muted-foreground">
               {t.memberSince} {formatDate(user.createdAt, locale)}
             </p>
+            {(user.verificationBadges ?? []).length ? (
+              <ul
+                aria-label={localText(
+                  locale,
+                  "Independent verifications",
+                  "Незалежні підтвердження",
+                  "Niezależne weryfikacje"
+                )}
+                className="mt-3 flex flex-wrap gap-2"
+              >
+                {(user.verificationBadges ?? []).map((verification) => (
+                  <li key={`${verification.type}-${verification.label}`}>
+                    <Badge tone={verificationTone(verification.type)}>
+                      {verificationLabel(locale, verification.type, verification.label)}
+                    </Badge>
+                  </li>
+                ))}
+              </ul>
+            ) : null}
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -94,6 +115,7 @@ export function PublicProfileView({
             labels={messages.chat}
             variant="primary"
           />
+          <UserSafetyActions userId={user.id} locale={locale} />
         </div>
       </div>
 
@@ -154,6 +176,28 @@ export function PublicProfileView({
       </div>
     </article>
   );
+}
+
+function verificationLabel(locale: Locale, type: string, fallback: string) {
+  if (type === "email")
+    return localText(locale, "Email verified", "Email підтверджено", "E-mail zweryfikowany");
+  if (type === "github")
+    return localText(locale, "GitHub linked", "GitHub підключено", "GitHub połączony");
+  if (type === "completed_collaboration")
+    return localText(
+      locale,
+      "Completed collaboration",
+      "Завершена співпраця",
+      "Ukończona współpraca"
+    );
+  return fallback;
+}
+
+function verificationTone(type: string): "blue" | "green" | "yellow" | "neutral" {
+  if (type === "email") return "blue";
+  if (type === "github") return "yellow";
+  if (type === "completed_collaboration") return "green";
+  return "neutral";
 }
 
 /**

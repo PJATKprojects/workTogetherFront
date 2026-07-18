@@ -26,9 +26,7 @@ export const userService = {
     return response.data;
   },
   confirmEmail: async (token: string) => {
-    const response = await api.get<{ message: string }>("/api/auth/confirm-email", {
-      params: { token },
-    });
+    const response = await api.post<{ message: string }>("/api/auth/confirm-email", { token });
     return response.data;
   },
   getAll: async (params: UserFilters) => {

@@ -7,13 +7,13 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { Locale } from "@/i18n/locales";
 import { hrefForLocaleFromPathname } from "@/i18n/paths";
 
-/** Extend when `pl` / `es` catalogs and middleware routing exist. */
-export const localeMenuCodes = ["en", "uk"] as const satisfies readonly Locale[];
+export const localeMenuCodes = ["en", "uk", "pl"] as const satisfies readonly Locale[];
 
 export type NavbarLocaleLabels = {
   menuButtonAria: string;
   localeEnglishAria: string;
   localeUkrainianAria: string;
+  localePolishAria: string;
 };
 
 function localeShort(code: Locale): string {
@@ -22,6 +22,8 @@ function localeShort(code: Locale): string {
       return "EN";
     case "uk":
       return "UA";
+    case "pl":
+      return "PL";
     default: {
       const _exhaustive: never = code;
       return _exhaustive;
@@ -30,7 +32,9 @@ function localeShort(code: Locale): string {
 }
 
 function localeOptionAria(code: Locale, labels: NavbarLocaleLabels): string {
-  return code === "en" ? labels.localeEnglishAria : labels.localeUkrainianAria;
+  if (code === "en") return labels.localeEnglishAria;
+  if (code === "uk") return labels.localeUkrainianAria;
+  return labels.localePolishAria;
 }
 
 export function NavbarLocaleMenu({
@@ -40,6 +44,7 @@ export function NavbarLocaleMenu({
   const pathname = usePathname() ?? "/";
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
 
   const items = localeMenuCodes.map((code) => ({
     code,
@@ -59,7 +64,10 @@ export function NavbarLocaleMenu({
     };
 
     const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") close();
+      if (e.key === "Escape") {
+        close();
+        window.requestAnimationFrame(() => triggerRef.current?.focus());
+      }
     };
 
     document.addEventListener("mousedown", onDocMouseDown);
@@ -73,6 +81,7 @@ export function NavbarLocaleMenu({
   return (
     <div ref={containerRef} className="relative shrink-0">
       <button
+        ref={triggerRef}
         type="button"
         aria-expanded={open}
         aria-haspopup="listbox"

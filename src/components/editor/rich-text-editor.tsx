@@ -287,7 +287,7 @@ export function RichTextEditor({
       <input
         ref={fileInputRef}
         type="file"
-        accept=".pdf,.doc,.docx,.zip,image/png,image/jpeg,image/webp,image/gif"
+        accept=".pdf,.docx,.xlsx,.pptx,.txt,.csv,image/png,image/jpeg,image/webp,image/gif"
         className="hidden"
         onChange={(event) => {
           const file = event.target.files?.[0];

@@ -32,6 +32,7 @@ export function ProjectApplicationsView({
         locale={locale}
         messages={messages}
         enabled={project.data.isOwner}
+        positions={project.data.positions}
       />
     </OwnerGuard>
   );

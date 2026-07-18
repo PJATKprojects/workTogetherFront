@@ -29,10 +29,16 @@ export function TechnologyPicker({
   selected,
   onChange,
   labels,
+  id,
+  ariaDescribedBy,
+  ariaInvalid,
 }: Readonly<{
   selected: number[];
   onChange: (ids: number[]) => void;
   labels: TechnologyPickerLabels;
+  id?: string;
+  ariaDescribedBy?: string;
+  ariaInvalid?: boolean;
 }>) {
   const technologies = useTechnologiesQuery();
   const queryClient = useQueryClient();
@@ -42,6 +48,7 @@ export function TechnologyPicker({
   const [error, setError] = useState("");
   const rootRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLInputElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     if (!open) return;
@@ -51,7 +58,10 @@ export function TechnologyPicker({
       }
     };
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setOpen(false);
+      if (event.key === "Escape") {
+        setOpen(false);
+        window.requestAnimationFrame(() => triggerRef.current?.focus());
+      }
     };
     document.addEventListener("pointerdown", onPointerDown);
     document.addEventListener("keydown", onKeyDown);
@@ -110,9 +120,15 @@ export function TechnologyPicker({
   return (
     <div ref={rootRef} className="relative">
       <button
+        id={id}
+        ref={triggerRef}
         type="button"
+        role="combobox"
         aria-haspopup="listbox"
         aria-expanded={open}
+        aria-controls={id ? `${id}-listbox` : undefined}
+        aria-describedby={ariaDescribedBy}
+        aria-invalid={ariaInvalid || undefined}
         onClick={() => setOpen((value) => !value)}
         className="focus-ring flex h-11 w-full cursor-pointer items-center justify-between gap-2 rounded-xl border border-input bg-surface px-3.5 text-sm text-foreground shadow-[var(--shadow-sm)] transition-colors hover:border-primary/40"
       >
@@ -157,6 +173,7 @@ export function TechnologyPicker({
             className="focus-ring h-10 w-full rounded-xl border border-input bg-surface-muted/60 px-3 text-sm outline-none placeholder:text-muted-foreground/70"
           />
           <div
+            id={id ? `${id}-listbox` : undefined}
             role="listbox"
             aria-multiselectable
             className="mt-2.5 flex max-h-56 flex-wrap content-start gap-1.5 overflow-y-auto overscroll-contain pr-1"

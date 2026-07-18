@@ -66,13 +66,16 @@ export const chatService = {
   leaveGroup: (conversationId: number) =>
     api.post(`/api/conversations/${conversationId}/group/leave`),
 
-  searchUsers: async (email: string) =>
-    (await api.get<ChatUser[]>("/api/conversations/users/search", { params: { email } })).data,
+  searchUsers: async (query: string) =>
+    (await api.get<ChatUser[]>("/api/conversations/users/search", { params: { query } })).data,
 
   sendMessage: async (conversationId: number, payload: SendChatMessagePayload) =>
     (await api.post<ChatMessage>(`/api/conversations/${conversationId}/messages`, payload)).data,
 
   markRead: (conversationId: number) => api.post(`/api/conversations/${conversationId}/read`),
+  resolveRequest: async (conversationId: number, decision: "accepted" | "declined") =>
+    (await api.post<Conversation>(`/api/conversations/${conversationId}/request`, { decision }))
+      .data,
 
   getUnreadCount: async () =>
     (await api.get<{ count: number }>("/api/conversations/unread-count")).data.count,

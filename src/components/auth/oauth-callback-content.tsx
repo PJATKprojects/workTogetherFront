@@ -42,6 +42,9 @@ export function OAuthCallbackContent({
       not_available: labels.notAvailable,
       access_denied: labels.accessDenied,
       email_linked: labels.emailLinked,
+      link_required: labels.linkRequired,
+      link_conflict: labels.linkConflict,
+      reauth_required: labels.reauthRequired,
       invalid_state: labels.invalidState,
     };
     return known[errorParam] ?? labels.genericFailed;
@@ -51,7 +54,10 @@ export function OAuthCallbackContent({
     if (startedRef.current || errorParam) return;
     startedRef.current = true;
 
-    const destination = sanitizeReturnUrl(searchParams.get("returnUrl"), `${localePrefix}/`);
+    const destination =
+      searchParams.get("onboarding") === "1"
+        ? `${localePrefix}/profile/community-onboarding`
+        : sanitizeReturnUrl(searchParams.get("returnUrl"), `${localePrefix}/`);
     void refreshSession().then((ok) => {
       if (ok) {
         router.replace(destination);
@@ -62,7 +68,11 @@ export function OAuthCallbackContent({
   }, [errorParam, localePrefix, refreshSession, router, searchParams]);
 
   return (
-    <div className="flex min-h-[100dvh] items-center justify-center bg-background px-4 text-foreground">
+    <main
+      id="main-content"
+      tabIndex={-1}
+      className="flex min-h-[100dvh] items-center justify-center bg-background px-4 text-foreground"
+    >
       <div className="glass-card w-full max-w-md rounded-3xl p-8 text-center">
         {errorText === null ? (
           <>
@@ -92,7 +102,13 @@ export function OAuthCallbackContent({
               </svg>
             </span>
             <h1 className="mt-4 text-xl font-semibold">{labels.errorTitle}</h1>
-            <p className="mt-2 text-sm leading-6 text-muted-foreground">{errorText}</p>
+            <p
+              role="alert"
+              aria-live="assertive"
+              className="mt-2 text-sm leading-6 text-muted-foreground"
+            >
+              {errorText}
+            </p>
             <div className="mt-6 flex flex-col gap-2 sm:flex-row sm:justify-center">
               <Link
                 href={`${localePrefix}/auth/login`}
@@ -110,6 +126,6 @@ export function OAuthCallbackContent({
           </>
         )}
       </div>
-    </div>
+    </main>
   );
 }

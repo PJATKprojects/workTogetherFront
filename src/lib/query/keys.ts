@@ -32,6 +32,15 @@ export const queryKeys = {
     users: (email: string) => [...queryKeys.chat.all, "users", email] as const,
     note: (targetUserId: number) => [...queryKeys.chat.all, "note", targetUserId] as const,
   },
+  notifications: {
+    all: ["notifications"] as const,
+    list: () => [...queryKeys.notifications.all, "list"] as const,
+    unread: () => [...queryKeys.notifications.all, "unread"] as const,
+  },
+  onboarding: {
+    all: ["onboarding"] as const,
+    progress: () => [...queryKeys.onboarding.all, "progress"] as const,
+  },
   lookups: {
     all: ["lookups"] as const,
     roles: () => [...queryKeys.lookups.all, "roles"] as const,

@@ -10,9 +10,11 @@ import {
   useMyApplicationsQuery,
   useProjectApplicationsQuery,
 } from "@/hooks/use-applications-query";
+import { localizeRole } from "@/i18n/lookups";
 import type { Locale } from "@/i18n/locales";
 import { getApiError } from "@/lib/api-error";
 import type { SiteMessages } from "@/messages/types";
+import type { ProjectPosition } from "@/types";
 
 import { ApplicationCard } from "./application-card";
 
@@ -66,7 +68,14 @@ export function ProjectApplicationList({
   locale,
   messages,
   enabled,
-}: Readonly<{ projectId: number; locale: Locale; messages: SiteMessages; enabled: boolean }>) {
+  positions = [],
+}: Readonly<{
+  projectId: number;
+  locale: Locale;
+  messages: SiteMessages;
+  enabled: boolean;
+  positions?: ProjectPosition[];
+}>) {
   const [page, setPage] = useState(1);
   const query = useProjectApplicationsQuery(projectId, { page, pageSize: 12 }, enabled);
   if (query.isLoading) return <LoadingSkeleton />;
@@ -83,16 +92,15 @@ export function ProjectApplicationList({
       <EmptyState title={messages.applications.emptyTitle} body={messages.applications.emptyBody} />
     );
 
-  const groups = Map.groupBy(
-    query.data.items,
-    (application) => `${application.position.id}:${application.position.role.name}`
-  );
+  const groups = Map.groupBy(query.data.items, (application) => application.position.id);
   return (
     <>
       <div className="grid gap-8">
-        {[...groups.entries()].map(([key, applications]) => (
-          <section key={key}>
-            <h2 className="mb-3 text-xl font-semibold">{key.split(":").slice(1).join(":")}</h2>
+        {[...groups.entries()].map(([positionId, applications]) => (
+          <section key={positionId}>
+            <h2 className="mb-3 text-xl font-semibold">
+              {localizeRole(applications[0].position.role, locale)}
+            </h2>
             <div className="grid gap-4">
               {applications.map((application) => (
                 <ApplicationCard
@@ -101,6 +109,14 @@ export function ProjectApplicationList({
                   locale={locale}
                   messages={messages}
                   ownerView
+                  alternatePositions={positions
+                    .filter(
+                      (position) => !position.isFilled && position.id !== application.position.id
+                    )
+                    .map((position) => ({
+                      id: position.id,
+                      name: localizeRole(position.role, locale),
+                    }))}
                 />
               ))}
             </div>

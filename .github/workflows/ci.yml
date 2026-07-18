@@ -17,7 +17,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
           cache: npm
 
       - name: Install dependencies
@@ -26,8 +26,98 @@ jobs:
       - name: Lint
         run: npm run lint
 
+      - name: Localization audit
+        run: npm run i18n:audit
+
+      - name: Formatting gate
+        run: npm run format:check
+
       - name: Typecheck
         run: npm run typecheck
 
       - name: Build
         run: npm run build
+
+  browser-accessibility:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install browser engines
+        run: npx playwright install --with-deps chrome firefox webkit
+
+      - name: Run browser and accessibility gate
+        run: npm run test:e2e
+
+      - name: Upload failure diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-diagnostics
+          path: |
+            playwright-report/
+            test-results/
+          if-no-files-found: ignore
+          retention-days: 14
+
+  supply-chain:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install locked dependencies
+        run: npm ci
+
+      - name: Dependency vulnerability gate
+        run: npm audit --audit-level=moderate
+
+      - name: Generate CycloneDX SBOM
+        run: npm sbom --sbom-format=cyclonedx > worktogether-frontend.cdx.json
+
+      - name: Upload SBOM
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-sbom
+          path: worktogether-frontend.cdx.json
+
+      - name: Build production container
+        run: docker build -t worktogether-frontend:${{ github.sha }} .
+
+      - name: Scan container
+        uses: aquasecurity/trivy-action@0.32.0
+        with:
+          image-ref: worktogether-frontend:${{ github.sha }}
+          format: sarif
+          output: trivy-frontend.sarif
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: "1"
+
+      - name: Upload container scan
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: trivy-frontend.sarif
+
+      - name: Scan repository secrets
+        uses: gitleaks/gitleaks-action@v2

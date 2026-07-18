@@ -59,6 +59,34 @@ export function useProjectMutations(projectId?: number) {
       },
       onSuccess: invalidate,
     }),
+    archive: useMutation({
+      mutationFn: () => {
+        if (!projectId) throw new Error("Project id is required");
+        return projectService.archive(projectId);
+      },
+      onSuccess: invalidate,
+    }),
+    restore: useMutation({
+      mutationFn: () => {
+        if (!projectId) throw new Error("Project id is required");
+        return projectService.restore(projectId);
+      },
+      onSuccess: invalidate,
+    }),
+    confirmFreshnessActive: useMutation({
+      mutationFn: () => {
+        if (!projectId) throw new Error("Project id is required");
+        return projectService.confirmFreshnessActive(projectId);
+      },
+      onSuccess: invalidate,
+    }),
+    confirmFreshnessClose: useMutation({
+      mutationFn: () => {
+        if (!projectId) throw new Error("Project id is required");
+        return projectService.confirmFreshnessClose(projectId);
+      },
+      onSuccess: invalidate,
+    }),
     addPosition: useMutation({
       mutationFn: (data: CreatePositionDto) => {
         if (!projectId) throw new Error("Project id is required");

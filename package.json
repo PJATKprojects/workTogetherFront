@@ -2,6 +2,9 @@
   "name": "work-together-front",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "node": ">=22.22.1"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -10,12 +13,16 @@
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "typecheck": "tsc --noEmit",
+    "i18n:audit": "node scripts/i18n-audit.mjs",
     "format": "prettier . --write",
     "format:check": "prettier . --check",
-    "check": "npm run lint && npm run typecheck && npm run format:check",
-    "prepare": "husky"
+    "test:e2e": "playwright test",
+    "test:e2e:headed": "playwright test --headed",
+    "test:e2e:install": "playwright install chrome firefox webkit",
+    "check": "npm run i18n:audit && npm run lint && npm run typecheck && npm run format:check"
   },
   "dependencies": {
+    "@microsoft/signalr": "^9.0.6",
     "@tanstack/query-sync-storage-persister": "^5.100.9",
     "@tanstack/react-query": "^5.100.9",
     "@tanstack/react-query-persist-client": "^5.100.9",
@@ -35,28 +42,24 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.12.1",
+    "@playwright/test": "^1.61.1",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.2.10",
-    "husky": "^9.1.7",
-    "lint-staged": "^17.0.4",
     "prettier": "^3.8.3",
     "tailwindcss": "^4",
     "typescript": "^5"
   },
-  "lint-staged": {
-    "*.{js,jsx,ts,tsx,mjs,cjs,json,md,css}": [
-      "prettier --write"
-    ],
-    "*.{js,jsx,ts,tsx,mjs,cjs}": [
-      "eslint --fix"
-    ]
-  },
   "overrides": {
     "form-data": "4.0.6",
     "postcss": "8.5.10"
+  },
+  "allowScripts": {
+    "sharp": true,
+    "unrs-resolver": true
   }
 }

@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
 import { LocaleHtmlAttributes } from "@/components/locale-html-attributes";
+import { MfaStepUpDialog } from "@/components/mfa-step-up-dialog";
+import { PwaRegistrar } from "@/components/pwa-registrar";
 import { AmbientBackground } from "@/components/ui/ambient-background";
 import { ScrollParallaxDriver } from "@/components/ui/scroll-parallax-driver";
 import { getMessages } from "@/i18n/config";
@@ -43,6 +45,8 @@ export default async function LocaleLayout({ children, params }: Props) {
       <LocaleHtmlAttributes locale={raw} />
       <ScrollParallaxDriver />
       <AmbientBackground />
+      <MfaStepUpDialog locale={raw} />
+      <PwaRegistrar locale={raw} />
       {children}
     </>
   );

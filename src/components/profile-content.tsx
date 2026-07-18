@@ -7,9 +7,10 @@ import { LoadingSkeleton } from "@/components/ui/loading-skeleton";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { useApplicationsBadge } from "@/hooks/use-applications-badge";
 import { useProfileQuery } from "@/hooks/use-profile-query";
-import type { Locale } from "@/i18n/locales";
+import { localText, type Locale } from "@/i18n/locales";
 import { withLocale } from "@/i18n/paths";
 import type { SiteMessages } from "@/messages/types";
+import { OnboardingProgress } from "@/components/profile/onboarding-progress";
 
 export function ProfileContent({
   locale,
@@ -103,7 +104,39 @@ export function ProfileContent({
         >
           {messages.nav.messages}
         </Link>
+        <Link
+          href={withLocale(locale, "/profile/security")}
+          className="rounded-xl border border-border px-4 py-2.5 text-sm font-semibold transition hover:bg-muted"
+        >
+          {messages.security.title}
+        </Link>
+        <Link
+          href={withLocale(locale, "/profile/safety")}
+          className="rounded-xl border border-border px-4 py-2.5 text-sm font-semibold transition hover:bg-muted"
+        >
+          {localText(locale, "Safety center", "Центр безпеки", "Centrum bezpieczeństwa")}
+        </Link>
+        <Link
+          href={withLocale(locale, "/profile/account")}
+          className="rounded-xl border border-border px-4 py-2.5 text-sm font-semibold transition hover:bg-muted"
+        >
+          {localText(locale, "Data and account", "Дані та акаунт", "Dane i konto")}
+        </Link>
+        {profile.isAdmin ? (
+          <Link
+            href={withLocale(locale, "/admin")}
+            className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-2.5 text-sm font-semibold text-amber-700 transition hover:bg-amber-500/20 dark:text-amber-300"
+          >
+            {localText(
+              locale,
+              "Administration & operations",
+              "Адміністрування та операції",
+              "Administracja i operacje"
+            )}
+          </Link>
+        ) : null}
       </div>
+      <OnboardingProgress locale={locale} />
     </>
   );
 }

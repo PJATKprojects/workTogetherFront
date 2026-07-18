@@ -9,7 +9,7 @@ import type { Locale } from "@/i18n/locales";
  */
 export function LocaleHtmlAttributes({ locale }: { locale: Locale }) {
   useEffect(() => {
-    document.documentElement.lang = locale === "uk" ? "uk" : "en";
+    document.documentElement.lang = locale;
   }, [locale]);
 
   return null;

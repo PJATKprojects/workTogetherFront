@@ -7,6 +7,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState } 
 import { tokenStore } from "@/lib/auth/token-store";
 import { queryKeys } from "@/lib/query/keys";
 import { authService } from "@/services/authService";
+import { securityService } from "@/services/securityService";
 import { clearApiResponseCache, invalidateAuthSessionState } from "@/services/api";
 import type { PrivateUser } from "@/types";
 
@@ -14,7 +15,10 @@ type AuthState = {
   user: PrivateUser | null;
   isAuthenticated: boolean;
   isLoading: boolean;
+  requiresCommunityOnboarding: boolean;
+  requiresProductOnboarding: boolean;
   login: (email: string, password: string) => Promise<void>;
+  loginWithPasskey: (email?: string) => Promise<void>;
   logout: () => Promise<void>;
   refreshSession: () => Promise<boolean>;
 };
@@ -24,6 +28,8 @@ const AuthContext = createContext<AuthState | null>(null);
 export function AuthProvider({ children }: Readonly<{ children: React.ReactNode }>) {
   const [user, setUser] = useState<PrivateUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [requiresCommunityOnboarding, setRequiresCommunityOnboarding] = useState(false);
+  const [requiresProductOnboarding, setRequiresProductOnboarding] = useState(false);
   const queryClient = useQueryClient();
 
   const refreshSession = useCallback(async () => {
@@ -33,6 +39,8 @@ export function AuthProvider({ children }: Readonly<{ children: React.ReactNode 
       queryClient.clear();
       clearApiResponseCache();
       setUser(response.user);
+      setRequiresCommunityOnboarding(response.requiresCommunityOnboarding);
+      setRequiresProductOnboarding(response.requiresProductOnboarding);
       queryClient.setQueryData(queryKeys.users.me(), response.user);
       // Project payloads carry per-user fields (isOwner, hasApplied) — anything
       // fetched anonymously before the session restore is stale now.
@@ -44,6 +52,8 @@ export function AuthProvider({ children }: Readonly<{ children: React.ReactNode 
       if (!axios.isCancel(error)) {
         tokenStore.clear();
         setUser(null);
+        setRequiresCommunityOnboarding(false);
+        setRequiresProductOnboarding(false);
       }
       return false;
     }
@@ -68,6 +78,14 @@ export function AuthProvider({ children }: Readonly<{ children: React.ReactNode 
     };
   }, [refreshSession]);
 
+  useEffect(() => {
+    if (isLoading) return;
+    document.documentElement.dataset.authReady = "true";
+    return () => {
+      delete document.documentElement.dataset.authReady;
+    };
+  }, [isLoading]);
+
   const login = useCallback(
     async (email: string, password: string) => {
       setUser(null);
@@ -77,6 +95,25 @@ export function AuthProvider({ children }: Readonly<{ children: React.ReactNode 
       const response = await authService.login({ email, password });
       clearApiResponseCache();
       setUser(response.user);
+      setRequiresCommunityOnboarding(response.requiresCommunityOnboarding);
+      setRequiresProductOnboarding(response.requiresProductOnboarding);
+      queryClient.setQueryData(queryKeys.users.me(), response.user);
+      await queryClient.invalidateQueries({ queryKey: queryKeys.projects.all });
+    },
+    [queryClient]
+  );
+
+  const loginWithPasskey = useCallback(
+    async (email?: string) => {
+      setUser(null);
+      invalidateAuthSessionState();
+      await queryClient.cancelQueries();
+      queryClient.clear();
+      const response = await securityService.loginWithPasskey(email);
+      clearApiResponseCache();
+      setUser(response.user);
+      setRequiresCommunityOnboarding(response.requiresCommunityOnboarding);
+      setRequiresProductOnboarding(response.requiresProductOnboarding);
       queryClient.setQueryData(queryKeys.users.me(), response.user);
       await queryClient.invalidateQueries({ queryKey: queryKeys.projects.all });
     },
@@ -87,6 +124,8 @@ export function AuthProvider({ children }: Readonly<{ children: React.ReactNode 
     // Disable polling components first, then abort their in-flight requests
     // while the access token is still valid for the server-side logout call.
     setUser(null);
+    setRequiresCommunityOnboarding(false);
+    setRequiresProductOnboarding(false);
     invalidateAuthSessionState();
     await queryClient.cancelQueries();
     try {
@@ -95,6 +134,8 @@ export function AuthProvider({ children }: Readonly<{ children: React.ReactNode 
       tokenStore.clear();
       clearApiResponseCache();
       setUser(null);
+      setRequiresCommunityOnboarding(false);
+      setRequiresProductOnboarding(false);
       queryClient.clear();
     }
   }, [queryClient]);
@@ -104,11 +145,23 @@ export function AuthProvider({ children }: Readonly<{ children: React.ReactNode 
       user,
       isAuthenticated: Boolean(user && tokenStore.get()),
       isLoading,
+      requiresCommunityOnboarding,
+      requiresProductOnboarding,
       login,
+      loginWithPasskey,
       logout,
       refreshSession,
     }),
-    [isLoading, login, logout, refreshSession, user]
+    [
+      isLoading,
+      login,
+      loginWithPasskey,
+      logout,
+      refreshSession,
+      requiresCommunityOnboarding,
+      requiresProductOnboarding,
+      user,
+    ]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

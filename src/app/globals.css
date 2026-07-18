@@ -313,13 +313,44 @@ textarea::-webkit-scrollbar {
     0 0 0 4px var(--ring);
 }
 
+:where(a[href], button, input, select, textarea, summary, [tabindex]:not([tabindex="-1"])):not(
+    .focus-ring
+  ):focus-visible {
+  outline: 3px solid var(--ring);
+  outline-offset: 3px;
+}
+
+main[tabindex="-1"]:focus {
+  outline: none;
+}
+
+@media (max-width: 20rem) {
+  body {
+    overflow-wrap: anywhere;
+  }
+}
+
+@media (forced-colors: active) {
+  .focus-ring:focus-visible,
+  :where(a[href], button, input, select, textarea, summary):focus-visible {
+    outline: 3px solid CanvasText;
+    outline-offset: 3px;
+    box-shadow: none;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
+  html:focus-within {
+    scroll-behavior: auto;
+  }
+
   *,
   *::before,
   *::after {
     animation-duration: 0.001ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
   }
 }
 

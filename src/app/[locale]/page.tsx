@@ -7,6 +7,7 @@ import { SiteHeader } from "@/components/site-header";
 import { RevealOnScroll } from "@/components/ui/reveal-on-scroll";
 import { getMessages, isLocale } from "@/i18n/config";
 import { withLocale } from "@/i18n/paths";
+import { getLegalIdentity } from "@/lib/legal-config";
 
 export default async function HomePage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale: raw } = await params;
@@ -17,6 +18,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
 
   const locale = raw;
   const t = getMessages(locale);
+  const legalIdentity = getLegalIdentity();
   const h = t.home;
   const highlightedHeroTitle = getHighlightedHeroTitle(h.heroTitle, locale);
 
@@ -39,7 +41,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
 
       <SiteHeader locale={locale} nav={t.nav} />
 
-      <main className="flex flex-1 flex-col">
+      <main id="main-content" tabIndex={-1} className="flex flex-1 flex-col">
         <section className="relative mx-auto w-full max-w-6xl px-4 pb-20 pt-12 sm:px-6 sm:pb-28 sm:pt-16 md:pt-20">
           {/* Floating decorative chips framing the hero (desktop only). */}
           <div aria-hidden className="pointer-events-none absolute inset-0 hidden xl:block">
@@ -380,7 +382,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
                 />
                 <a
                   className="text-muted-foreground transition-colors hover:text-foreground"
-                  href="mailto:hello@worktogether.app"
+                  href={`mailto:${legalIdentity.contactEmail}`}
                 >
                   {t.footer.contact}
                 </a>
@@ -406,7 +408,13 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
               <p className="text-center sm:text-left">
                 © {new Date().getFullYear()} WorkTogether. {t.footer.rights}
               </p>
-              <div className="flex items-center gap-4">
+              <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2">
+                <Link
+                  href={withLocale(locale, "/policies")}
+                  className="transition-colors hover:text-foreground"
+                >
+                  {t.footer.policies}
+                </Link>
                 <Link
                   href={withLocale(locale, "/terms")}
                   className="transition-colors hover:text-foreground"
