@@ -120,9 +120,25 @@ export function ProfileContent({
         </Link>
         <Link
           href={withLocale(locale, "/profile/account")}
-          className="rounded-xl border border-border px-4 py-2.5 text-sm font-semibold transition hover:bg-muted"
+          className={
+            profile.accountDeletionScheduledAt
+              ? "rounded-xl border border-warning/40 bg-warning/10 px-4 py-2.5 text-sm font-semibold text-foreground transition hover:bg-warning/20"
+              : "rounded-xl border border-destructive/30 px-4 py-2.5 text-sm font-semibold text-destructive transition hover:bg-destructive/10"
+          }
         >
-          {localText(locale, "Data and account", "Дані та акаунт", "Dane i konto")}
+          {profile.accountDeletionScheduledAt
+            ? localText(
+                locale,
+                "Deletion scheduled — manage",
+                "Видалення заплановано — керувати",
+                "Usunięcie zaplanowane — zarządzaj"
+              )
+            : localText(
+                locale,
+                "Account data & deletion",
+                "Дані та видалення акаунта",
+                "Dane i usunięcie konta"
+              )}
         </Link>
         {profile.isAdmin ? (
           <Link

@@ -1,5 +1,7 @@
 "use client";
 
+import { useId, type ReactNode } from "react";
+
 import { useDialogFocus } from "@/hooks/use-dialog-focus";
 
 import { Button } from "./button";
@@ -7,22 +9,31 @@ import { Button } from "./button";
 export function ConfirmDialog({
   open,
   title,
+  description,
+  children,
   confirmLabel,
   cancelLabel,
   danger = false,
   pending = false,
+  confirmDisabled = false,
   onConfirm,
   onCancel,
 }: Readonly<{
   open: boolean;
   title: string;
+  description?: string;
+  children?: ReactNode;
   confirmLabel: string;
   cancelLabel: string;
   danger?: boolean;
   pending?: boolean;
+  confirmDisabled?: boolean;
   onConfirm: () => void;
   onCancel: () => void;
 }>) {
+  const id = useId();
+  const titleId = `${id}-title`;
+  const descriptionId = `${id}-description`;
   const dialogRef = useDialogFocus<HTMLDivElement>(open, pending ? () => undefined : onCancel);
 
   if (!open) return null;
@@ -35,14 +46,22 @@ export function ConfirmDialog({
         ref={dialogRef}
         role="alertdialog"
         aria-modal="true"
-        aria-labelledby="confirm-dialog-title"
+        aria-labelledby={titleId}
+        aria-describedby={description ? descriptionId : undefined}
+        aria-busy={pending}
         tabIndex={-1}
         onClick={(event) => event.stopPropagation()}
         className="login-fade-up glass-panel w-full max-w-md rounded-3xl p-6"
       >
-        <h2 id="confirm-dialog-title" className="text-lg font-semibold text-foreground">
+        <h2 id={titleId} className="text-lg font-semibold text-foreground">
           {title}
         </h2>
+        {description ? (
+          <p id={descriptionId} className="mt-3 text-sm leading-6 text-muted-foreground">
+            {description}
+          </p>
+        ) : null}
+        {children ? <div className="mt-5">{children}</div> : null}
         <div className="mt-6 flex justify-end gap-3">
           <Button
             type="button"
@@ -56,7 +75,7 @@ export function ConfirmDialog({
           <Button
             type="button"
             variant={danger ? "danger" : "primary"}
-            disabled={pending}
+            disabled={pending || confirmDisabled}
             onClick={onConfirm}
           >
             {confirmLabel}

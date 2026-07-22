@@ -11,8 +11,13 @@ export const accountService = {
     const response = await api.get<Blob>("/api/account/export", { responseType: "blob" });
     return response.data;
   },
-  requestDeletion: async (archiveOwnedProjects: boolean) =>
-    (await api.post<DeletionRequest>("/api/account/delete-request", { archiveOwnedProjects })).data,
+  requestDeletion: async (confirmation: string, archiveOwnedProjects: boolean) =>
+    (
+      await api.post<DeletionRequest>("/api/account/delete-request", {
+        confirmation,
+        archiveOwnedProjects,
+      })
+    ).data,
   cancelDeletion: async () => {
     await api.delete("/api/account/delete-request");
   },

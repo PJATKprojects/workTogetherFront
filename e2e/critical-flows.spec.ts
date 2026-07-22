@@ -123,6 +123,57 @@ test.describe("critical browser flows", () => {
     await expect(page).toHaveURL(/\/en\/profile$/);
   });
 
+  test("account deletion requires typed confirmation and signs out to home", async ({ page }) => {
+    const api = await installApiMock(page, { authenticated: true });
+    await gotoAfterAuthBootstrap(page, "/en/profile");
+
+    await page.getByRole("link", { name: "Account data & deletion" }).click();
+    await expect(page).toHaveURL(/\/en\/profile\/account$/);
+
+    const scheduleButton = page.getByRole("button", { name: "Schedule deletion" });
+    await scheduleButton.click();
+
+    const dialog = page.getByRole("alertdialog", { name: "Confirm account deletion" });
+    const confirmation = page.getByLabel("Type DELETE to confirm");
+    const deleteButton = page.getByRole("button", { name: "Delete my account" });
+    await expect(dialog).toBeVisible();
+    await expect(confirmation).toBeFocused();
+    await expect(deleteButton).toBeDisabled();
+
+    await page.keyboard.press("Escape");
+    await expect(dialog).toBeHidden();
+    await expect(scheduleButton).toBeFocused();
+
+    await scheduleButton.click();
+    await confirmation.fill("DELETE");
+    await expect(deleteButton).toBeEnabled();
+    await deleteButton.click();
+
+    await expect.poll(() => api.accountDeletionRequests).toHaveLength(1);
+    expect(api.accountDeletionRequests[0]).toEqual({
+      confirmation: "DELETE",
+      archiveOwnedProjects: false,
+    });
+    await expect(page).toHaveURL(/\/en\/?$/);
+    await expect(page.getByRole("banner").getByRole("link", { name: "Sign up" })).toBeVisible();
+    expect(api.signedIn).toBe(false);
+  });
+
+  test("scheduled account deletion remains visible and can be cancelled", async ({ page }) => {
+    const api = await installApiMock(page, {
+      authenticated: true,
+      accountDeletionScheduledAt: "2026-08-21T12:00:00Z",
+    });
+    await gotoAfterAuthBootstrap(page, "/en/profile/account");
+
+    await expect(page.getByText("Scheduled for", { exact: false })).toBeVisible();
+    await page.getByRole("button", { name: "Cancel deletion" }).click();
+
+    await expect.poll(() => api.accountDeletionCancellations).toBe(1);
+    await expect(page.getByRole("status")).toContainText("Deletion was cancelled.");
+    await expect(page.getByRole("button", { name: "Schedule deletion" })).toBeVisible();
+  });
+
   test("email confirmation is explicit and reset consumes a one-time token", async ({ page }) => {
     const api = await installApiMock(page);
     await gotoAfterAuthBootstrap(page, "/en/auth/confirm-email?token=one-time-confirm-token");

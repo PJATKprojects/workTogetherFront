@@ -58,6 +58,8 @@ export interface PrivateUser extends PublicUser {
   availableStartDate: string | null;
   productOnboardingCompletedAt: string | null;
   githubUsername: string;
+  accountDeletionRequestedAt: string | null;
+  accountDeletionScheduledAt: string | null;
 }
 
 export interface UserListItem {

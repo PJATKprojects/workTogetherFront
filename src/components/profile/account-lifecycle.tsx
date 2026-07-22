@@ -1,8 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useId, useState } from "react";
 
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { Input } from "@/components/ui/input";
+import { useAuth } from "@/hooks/use-auth";
 import { localText, type Locale } from "@/i18n/locales";
 import { withLocale } from "@/i18n/paths";
 import { getApiError } from "@/lib/api-error";
@@ -10,14 +13,20 @@ import { formatDateTime } from "@/lib/format";
 import { accountService } from "@/services/accountService";
 
 export function AccountLifecycle({ locale }: Readonly<{ locale: Locale }>) {
+  const { user, logout } = useAuth();
+  const confirmationId = useId();
   const [archiveProjects, setArchiveProjects] = useState(false);
-  const [scheduledAt, setScheduledAt] = useState<string | null>(null);
+  const [scheduledAt, setScheduledAt] = useState<string | null>(
+    user?.accountDeletionScheduledAt ?? null
+  );
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [confirmation, setConfirmation] = useState("");
   const [busy, setBusy] = useState("");
-  const [message, setMessage] = useState("");
+  const [notice, setNotice] = useState<{ kind: "status" | "error"; text: string } | null>(null);
 
   const exportData = async () => {
     setBusy("export");
-    setMessage("");
+    setNotice(null);
     try {
       const blob = await accountService.exportData();
       const url = URL.createObjectURL(blob);
@@ -27,8 +36,9 @@ export function AccountLifecycle({ locale }: Readonly<{ locale: Locale }>) {
       anchor.click();
       URL.revokeObjectURL(url);
     } catch (value) {
-      setMessage(
-        getApiError(
+      setNotice({
+        kind: "error",
+        text: getApiError(
           value,
           localText(
             locale,
@@ -36,34 +46,35 @@ export function AccountLifecycle({ locale }: Readonly<{ locale: Locale }>) {
             "Не вдалося створити експорт.",
             "Nie udało się utworzyć eksportu."
           )
-        ).message
-      );
+        ).message,
+      });
     } finally {
       setBusy("");
     }
   };
 
   const requestDeletion = async () => {
-    if (
-      !window.confirm(
-        localText(
-          locale,
-          "Schedule account deletion? You will have 30 days to cancel.",
-          "Запланувати видалення акаунта? У вас буде 30 днів на скасування.",
-          "Zaplanować usunięcie konta? Będziesz mieć 30 dni na anulowanie."
-        )
-      )
-    )
-      return;
     setBusy("delete");
-    setMessage("");
+    setNotice(null);
     try {
-      const result = await accountService.requestDeletion(archiveProjects);
+      const result = await accountService.requestDeletion(confirmation, archiveProjects);
       setScheduledAt(result.accountDeletionScheduledAt);
-      setMessage(result.message);
+      setConfirmOpen(false);
+      setNotice({
+        kind: "status",
+        text: localText(
+          locale,
+          "Account deletion is scheduled. Signing you out…",
+          "Видалення акаунта заплановано. Виконується вихід…",
+          "Usunięcie konta zostało zaplanowane. Wylogowujemy…"
+        ),
+      });
+      await logout(withLocale(locale, "/"));
     } catch (value) {
-      setMessage(
-        getApiError(
+      setConfirmOpen(false);
+      setNotice({
+        kind: "error",
+        text: getApiError(
           value,
           localText(
             locale,
@@ -71,8 +82,8 @@ export function AccountLifecycle({ locale }: Readonly<{ locale: Locale }>) {
             "Спочатку передайте власність активних командних проєктів або оберіть архівування.",
             "Najpierw przekaż aktywne projekty zespołowe albo wybierz ich archiwizację."
           )
-        ).message
-      );
+        ).message,
+      });
     } finally {
       setBusy("");
     }
@@ -80,20 +91,23 @@ export function AccountLifecycle({ locale }: Readonly<{ locale: Locale }>) {
 
   const cancel = async () => {
     setBusy("cancel");
+    setNotice(null);
     try {
       await accountService.cancelDeletion();
       setScheduledAt(null);
-      setMessage(
-        localText(
+      setNotice({
+        kind: "status",
+        text: localText(
           locale,
           "Deletion was cancelled.",
           "Видалення скасовано.",
           "Usunięcie zostało anulowane."
-        )
-      );
+        ),
+      });
     } catch (value) {
-      setMessage(
-        getApiError(
+      setNotice({
+        kind: "error",
+        text: getApiError(
           value,
           localText(
             locale,
@@ -101,8 +115,8 @@ export function AccountLifecycle({ locale }: Readonly<{ locale: Locale }>) {
             "Не вдалося скасувати видалення.",
             "Nie udało się anulować usunięcia."
           )
-        ).message
-      );
+        ).message,
+      });
     } finally {
       setBusy("");
     }
@@ -110,9 +124,16 @@ export function AccountLifecycle({ locale }: Readonly<{ locale: Locale }>) {
 
   return (
     <div className="grid gap-6">
-      {message ? (
-        <p role="status" className="rounded-xl border border-border bg-surface-muted p-4 text-sm">
-          {message}
+      {notice ? (
+        <p
+          role={notice.kind === "error" ? "alert" : "status"}
+          className={`rounded-xl border p-4 text-sm ${
+            notice.kind === "error"
+              ? "border-destructive/30 bg-destructive/10 text-destructive"
+              : "border-border bg-surface-muted"
+          }`}
+        >
+          {notice.text}
         </p>
       ) : null}
       <section className="rounded-3xl border border-border bg-surface p-6">
@@ -197,20 +218,67 @@ export function AccountLifecycle({ locale }: Readonly<{ locale: Locale }>) {
         ) : (
           <button
             disabled={busy.length > 0}
-            onClick={() => void requestDeletion()}
+            aria-haspopup="dialog"
+            onClick={(event) => {
+              event.currentTarget.focus();
+              setConfirmation("");
+              setConfirmOpen(true);
+            }}
             className="mt-4 inline-flex min-h-11 items-center justify-center rounded-xl bg-destructive px-4 py-2.5 text-center text-sm font-semibold leading-snug text-white disabled:opacity-50"
           >
-            {busy === "delete"
-              ? "…"
-              : localText(
-                  locale,
-                  "Schedule deletion",
-                  "Запланувати видалення",
-                  "Zaplanuj usunięcie"
-                )}
+            {localText(locale, "Schedule deletion", "Запланувати видалення", "Zaplanuj usunięcie")}
           </button>
         )}
       </section>
+      <ConfirmDialog
+        open={confirmOpen}
+        title={localText(
+          locale,
+          "Confirm account deletion",
+          "Підтвердьте видалення акаунта",
+          "Potwierdź usunięcie konta"
+        )}
+        description={localText(
+          locale,
+          "Your account will be deleted after 30 days. You will be signed out now, but you can sign in again during that period to cancel.",
+          "Акаунт буде видалено через 30 днів. Зараз ви вийдете із системи, але протягом цього строку зможете знову увійти й скасувати видалення.",
+          "Konto zostanie usunięte po 30 dniach. Teraz nastąpi wylogowanie, ale w tym okresie możesz zalogować się ponownie i anulować usunięcie."
+        )}
+        confirmLabel={
+          busy === "delete"
+            ? localText(locale, "Scheduling…", "Планування…", "Planowanie…")
+            : localText(locale, "Delete my account", "Видалити мій акаунт", "Usuń moje konto")
+        }
+        cancelLabel={localText(locale, "Keep account", "Залишити акаунт", "Zachowaj konto")}
+        danger
+        pending={busy === "delete"}
+        confirmDisabled={confirmation !== "DELETE"}
+        onConfirm={() => void requestDeletion()}
+        onCancel={() => {
+          setConfirmOpen(false);
+          setConfirmation("");
+        }}
+      >
+        <label htmlFor={confirmationId} className="text-sm font-semibold text-foreground">
+          {localText(
+            locale,
+            "Type DELETE to confirm",
+            "Введіть DELETE для підтвердження",
+            "Wpisz DELETE, aby potwierdzić"
+          )}
+        </label>
+        <Input
+          id={confirmationId}
+          value={confirmation}
+          onChange={(event) => setConfirmation(event.target.value)}
+          placeholder="DELETE"
+          autoComplete="off"
+          spellCheck={false}
+          disabled={busy === "delete"}
+          data-dialog-initial-focus
+          className="mt-2"
+        />
+      </ConfirmDialog>
     </div>
   );
 }

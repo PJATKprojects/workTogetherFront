@@ -43,6 +43,8 @@ export const testUser = {
   availableStartDate: null,
   productOnboardingCompletedAt: "2026-01-01T12:00:00Z",
   githubUsername: "example",
+  accountDeletionRequestedAt: null,
+  accountDeletionScheduledAt: null,
 } as const;
 
 export const publicUser = {
@@ -176,6 +178,7 @@ type MockOptions = {
   includePublicUser?: boolean;
   includeAcceptedApplication?: boolean;
   onboardingProgress?: OnboardingProgress;
+  accountDeletionScheduledAt?: string;
 };
 
 type MockState = {
@@ -193,6 +196,8 @@ type MockState = {
   adminSanctions: Array<Record<string, unknown>>;
   adminJobRuns: string[];
   confirmEmailRequests: Array<Record<string, unknown>>;
+  accountDeletionRequests: Array<Record<string, unknown>>;
+  accountDeletionCancellations: number;
 };
 
 const emptyPage = {
@@ -283,8 +288,17 @@ export async function installApiMock(page: Page, options: MockOptions = {}): Pro
     ],
     adminJobRuns: [],
     confirmEmailRequests: [],
+    accountDeletionRequests: [],
+    accountDeletionCancellations: 0,
   };
-  const currentUser = options.admin ? { ...testUser, isAdmin: true } : testUser;
+  const currentUser = {
+    ...testUser,
+    isAdmin: options.admin ?? false,
+    accountDeletionRequestedAt: (options.accountDeletionScheduledAt
+      ? "2026-07-22T12:00:00Z"
+      : null) as string | null,
+    accountDeletionScheduledAt: (options.accountDeletionScheduledAt ?? null) as string | null,
+  };
 
   await page.route("**/hubs/**", (route) => route.abort());
   await page.route("**/api/**", async (route) => {
@@ -319,6 +333,29 @@ export async function installApiMock(page: Page, options: MockOptions = {}): Pro
     if (path === "/api/auth/logout" && method === "POST") {
       state.signedIn = false;
       return json(route, {});
+    }
+
+    if (path === "/api/account/delete-request" && method === "POST") {
+      const payload = request.postDataJSON() as Record<string, unknown>;
+      state.accountDeletionRequests.push(payload);
+      currentUser.accountDeletionRequestedAt = "2026-07-22T12:00:00Z";
+      currentUser.accountDeletionScheduledAt = "2026-08-21T12:00:00Z";
+      return json(
+        route,
+        {
+          accountDeletionScheduledAt: currentUser.accountDeletionScheduledAt,
+          gracePeriodDays: 30,
+          message: "Account deletion is scheduled. You can cancel during the grace period.",
+        },
+        202
+      );
+    }
+
+    if (path === "/api/account/delete-request" && method === "DELETE") {
+      state.accountDeletionCancellations += 1;
+      currentUser.accountDeletionRequestedAt = null;
+      currentUser.accountDeletionScheduledAt = null;
+      return route.fulfill({ status: 204 });
     }
 
     if (path === "/api/auth/reset-password" && method === "POST") {
