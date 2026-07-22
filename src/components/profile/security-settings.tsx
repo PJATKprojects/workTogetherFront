@@ -1,8 +1,8 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 
+import { useAuth } from "@/hooks/use-auth";
 import type { Locale } from "@/i18n/locales";
 import { withLocale } from "@/i18n/paths";
 import { formatDateTime } from "@/lib/format";
@@ -18,7 +18,7 @@ export function SecuritySettings({
   locale,
   labels,
 }: Readonly<{ locale: Locale; labels: SiteMessages["security"] }>) {
-  const router = useRouter();
+  const { logout } = useAuth();
   const reauthCopy = {
     en: {
       confirmed: "Identity confirmed for 20 minutes.",
@@ -168,8 +168,7 @@ export function SecuritySettings({
     try {
       await authService.revokeSession(session.id);
       if (session.isCurrent) {
-        await authService.logout();
-        router.replace(withLocale(locale, "/auth/login"));
+        await logout(withLocale(locale, "/"));
       } else {
         await load();
       }
@@ -186,8 +185,7 @@ export function SecuritySettings({
       await authService.revokeAllSessions(keepCurrent);
       if (keepCurrent) await load();
       else {
-        await authService.logout();
-        router.replace(withLocale(locale, "/auth/login"));
+        await logout(withLocale(locale, "/"));
       }
     } catch (requestError) {
       setError(authService.getApiErrorMessage(requestError, labels.genericError));

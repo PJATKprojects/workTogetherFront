@@ -4,6 +4,9 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState, type FormEvent, type ReactNode } from "react";
 
+import { DateOfBirthField } from "@/components/ui/date-of-birth-field";
+import { type Locale } from "@/i18n/locales";
+import { isAdultBirthDate } from "@/lib/date-of-birth";
 import { authService } from "@/services/authService";
 
 export type RegisterFormLabels = Readonly<{
@@ -61,6 +64,11 @@ const iconBase =
 
 export function RegisterForm({ labels, localePrefix }: Props) {
   const router = useRouter();
+  const locale: Locale = localePrefix.endsWith("/uk")
+    ? "uk"
+    : localePrefix.endsWith("/pl")
+      ? "pl"
+      : "en";
   const [nickname, setNickname] = useState("");
   const [email, setEmail] = useState("");
   const [dateOfBirth, setDateOfBirth] = useState("");
@@ -98,7 +106,7 @@ export function RegisterForm({ labels, localePrefix }: Props) {
     };
     if (nickname.trim().length < 2) e.nickname = labels.errNickname;
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) e.email = labels.errEmail;
-    if (!isOldEnough(dateOfBirth)) e.dateOfBirth = labels.errAge;
+    if (!isAdultBirthDate(dateOfBirth)) e.dateOfBirth = labels.errAge;
     if (!passwordIsValid) e.password = labels.errPassword;
     if (!confirm || confirm !== password) e.confirm = labels.errConfirm;
     return e;
@@ -137,7 +145,7 @@ export function RegisterForm({ labels, localePrefix }: Props) {
         password,
         confirmPassword: confirm,
         dateOfBirth,
-        locale: localePrefix.endsWith("/uk") ? "uk" : localePrefix.endsWith("/pl") ? "pl" : "en",
+        locale,
         acceptCommunityGuidelines: acceptGuidelines,
       });
       setSubmitMessage(labels.success);
@@ -230,45 +238,18 @@ export function RegisterForm({ labels, localePrefix }: Props) {
           />
         </FieldWrap>
 
-        <FieldWrap
-          htmlFor="register-date-of-birth"
-          errorId="register-date-of-birth-error"
+        <DateOfBirthField
+          idPrefix="register-date-of-birth"
           label={labels.dateOfBirth}
+          locale={locale}
+          onChange={setDateOfBirth}
+          onBlur={() => setTouched((value) => ({ ...value, dateOfBirth: true }))}
+          hint={!touched.dateOfBirth ? labels.ageHint : undefined}
           error={touched.dateOfBirth ? errors.dateOfBirth : ""}
           valid={touched.dateOfBirth && validMap.dateOfBirth}
-          delayMs={135}
-        >
-          <input
-            id="register-date-of-birth"
-            name="dateOfBirth"
-            autoComplete="bday"
-            value={dateOfBirth}
-            type="date"
-            onChange={(event) => setDateOfBirth(event.target.value)}
-            onBlur={() => setTouched((value) => ({ ...value, dateOfBirth: true }))}
-            className={getInputClass(
-              `${inputBase} pl-4 pr-11`,
-              touched.dateOfBirth,
-              !!errors.dateOfBirth,
-              validMap.dateOfBirth
-            )}
-            max={eighteenYearsAgo()}
-            min={oneHundredTwentyYearsAgo()}
-            aria-invalid={(touched.dateOfBirth && Boolean(errors.dateOfBirth)) || undefined}
-            aria-describedby={
-              touched.dateOfBirth && errors.dateOfBirth
-                ? "register-date-of-birth-error"
-                : !touched.dateOfBirth
-                  ? "register-date-of-birth-hint"
-                  : undefined
-            }
-          />
-          {!touched.dateOfBirth ? (
-            <p id="register-date-of-birth-hint" className="mt-1 text-[11px] text-muted-foreground">
-              {labels.ageHint}
-            </p>
-          ) : null}
-        </FieldWrap>
+          compact
+          className="register-fade-up space-y-px"
+        />
 
         <FieldWrap
           htmlFor="register-email"
@@ -559,23 +540,6 @@ function getPasswordScore(password: string) {
 
 function isPasswordValid(password: string) {
   return password.length >= 12 && /\d/.test(password);
-}
-
-function eighteenYearsAgo() {
-  const date = new Date();
-  date.setFullYear(date.getFullYear() - 18);
-  return date.toISOString().slice(0, 10);
-}
-
-function oneHundredTwentyYearsAgo() {
-  const date = new Date();
-  date.setFullYear(date.getFullYear() - 120);
-  return date.toISOString().slice(0, 10);
-}
-
-function isOldEnough(value: string) {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
-  return value <= eighteenYearsAgo() && value >= oneHundredTwentyYearsAgo();
 }
 
 function getPasswordStrengthMeta(score: number, labels: RegisterFormLabels) {

@@ -1,6 +1,5 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { useAuth } from "@/hooks/use-auth";
@@ -12,19 +11,11 @@ export function ProfileLogoutButton({
   label,
 }: Readonly<{ locale: Locale; label: string }>) {
   const { logout } = useAuth();
-  const router = useRouter();
   const [isPending, setIsPending] = useState(false);
 
   const onLogout = async () => {
     setIsPending(true);
-    try {
-      await logout();
-    } catch {
-      // The in-memory session is cleared even if the server is temporarily unavailable.
-    } finally {
-      router.replace(withLocale(locale, "/"));
-      router.refresh();
-    }
+    await logout(withLocale(locale, "/"));
   };
 
   return (

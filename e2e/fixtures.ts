@@ -316,6 +316,11 @@ export async function installApiMock(page: Page, options: MockOptions = {}): Pro
       });
     }
 
+    if (path === "/api/auth/logout" && method === "POST") {
+      state.signedIn = false;
+      return json(route, {});
+    }
+
     if (path === "/api/auth/reset-password" && method === "POST") {
       return json(route, { message: "Password reset." });
     }

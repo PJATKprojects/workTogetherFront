@@ -19,7 +19,7 @@ type AuthState = {
   requiresProductOnboarding: boolean;
   login: (email: string, password: string) => Promise<void>;
   loginWithPasskey: (email?: string) => Promise<void>;
-  logout: () => Promise<void>;
+  logout: (redirectTo: string) => Promise<void>;
   refreshSession: () => Promise<boolean>;
 };
 
@@ -120,25 +120,34 @@ export function AuthProvider({ children }: Readonly<{ children: React.ReactNode 
     [queryClient]
   );
 
-  const logout = useCallback(async () => {
-    // Disable polling components first, then abort their in-flight requests
-    // while the access token is still valid for the server-side logout call.
-    setUser(null);
-    setRequiresCommunityOnboarding(false);
-    setRequiresProductOnboarding(false);
-    invalidateAuthSessionState();
-    await queryClient.cancelQueries();
-    try {
-      await authService.logout();
-    } finally {
-      tokenStore.clear();
-      clearApiResponseCache();
+  const logout = useCallback(
+    async (redirectTo: string) => {
+      // Disable polling components first, then abort their in-flight requests
+      // while the access token is still valid for the server-side logout call.
+      // Keep AuthGuard loading until navigation starts so its login redirect
+      // cannot race the explicit post-logout destination.
+      setIsLoading(true);
       setUser(null);
       setRequiresCommunityOnboarding(false);
       setRequiresProductOnboarding(false);
-      queryClient.clear();
-    }
-  }, [queryClient]);
+      invalidateAuthSessionState();
+      await queryClient.cancelQueries();
+      try {
+        await authService.logout();
+      } catch {
+        // A network failure must not keep the local session or block sign-out.
+      } finally {
+        tokenStore.clear();
+        clearApiResponseCache();
+        setUser(null);
+        setRequiresCommunityOnboarding(false);
+        setRequiresProductOnboarding(false);
+        queryClient.clear();
+      }
+      window.location.replace(redirectTo);
+    },
+    [queryClient]
+  );
 
   const value = useMemo<AuthState>(
     () => ({

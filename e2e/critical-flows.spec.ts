@@ -62,6 +62,44 @@ test.describe("critical browser flows", () => {
     );
   });
 
+  test("community onboarding keeps multi-digit days editable and signs out to home", async ({
+    page,
+  }) => {
+    await installApiMock(page, {
+      authenticated: true,
+      requiresCommunityOnboarding: true,
+    });
+    await gotoAfterAuthBootstrap(page, "/en/profile/community-onboarding");
+
+    const day = page.getByLabel("Day", { exact: true });
+    const month = page.getByLabel("Month", { exact: true });
+    const year = page.getByLabel("Year", { exact: true });
+    await day.focus();
+    await day.pressSequentially("3");
+    await expect(day).toBeFocused();
+    await expect(day).toHaveValue("3");
+    await expect(month).toHaveValue("");
+    await day.pressSequentially("0");
+    await expect(day).toHaveValue("30");
+
+    await month.fill("01");
+    await year.fill("1990");
+    await page.getByRole("checkbox").check();
+    await expect(page.getByRole("button", { name: "Continue" })).toBeEnabled();
+
+    await page.getByRole("button", { name: "Sign out" }).click();
+    await expect(page).toHaveURL(/\/en\/?$/);
+    await expect(page.getByRole("banner").getByRole("link", { name: "Sign up" })).toBeVisible();
+  });
+
+  test("saving profile settings closes edit mode", async ({ page }) => {
+    await installApiMock(page, { authenticated: true });
+    await gotoAfterAuthBootstrap(page, "/en/profile/edit");
+
+    await page.getByRole("button", { name: "Save", exact: true }).click();
+    await expect(page).toHaveURL(/\/en\/profile$/);
+  });
+
   test("email confirmation is explicit and reset consumes a one-time token", async ({ page }) => {
     const api = await installApiMock(page);
     await gotoAfterAuthBootstrap(page, "/en/auth/confirm-email?token=one-time-confirm-token");

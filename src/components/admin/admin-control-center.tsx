@@ -173,9 +173,7 @@ function AdminConsoleHeader({ locale }: Readonly<{ locale: Locale }>) {
             disabled={leaving}
             onClick={() => {
               setLeaving(true);
-              void logout().finally(() => {
-                window.location.assign(withLocale(locale, "/auth/login"));
-              });
+              void logout(withLocale(locale, "/"));
             }}
             className="focus-ring min-h-10 rounded-xl border border-border px-3 text-sm font-semibold hover:bg-muted disabled:opacity-50"
           >

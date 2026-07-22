@@ -14,6 +14,7 @@ import { useProfileMutation } from "@/hooks/use-profile-mutation";
 import { useRolesQuery, useTechnologiesQuery } from "@/hooks/use-lookups-query";
 import { localizeRole } from "@/i18n/lookups";
 import { localText } from "@/i18n/locales";
+import { withLocale } from "@/i18n/paths";
 import { getApiError } from "@/lib/api-error";
 import { SOCIAL_NETWORKS, socialLabel } from "@/lib/socials";
 import { fileService } from "@/services/fileService";
@@ -221,7 +222,7 @@ export function ProfileForm({
     }
     try {
       await mutation.mutateAsync(payload);
-      setMessage(messages.profile.updateSuccess);
+      router.replace(withLocale(profile.locale, "/profile"));
     } catch (error) {
       setMessage(getApiError(error, messages.errors.generic).message);
     }

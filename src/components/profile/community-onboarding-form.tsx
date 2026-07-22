@@ -4,23 +4,38 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 
+import { DateOfBirthField } from "@/components/ui/date-of-birth-field";
 import { useAuth } from "@/hooks/use-auth";
 import { localText, type Locale } from "@/i18n/locales";
 import { withLocale } from "@/i18n/paths";
 import { getApiError } from "@/lib/api-error";
+import { isAdultBirthDate } from "@/lib/date-of-birth";
 import { authService } from "@/services/authService";
 
 export function CommunityOnboardingForm({ locale }: Readonly<{ locale: Locale }>) {
   const router = useRouter();
   const { refreshSession, logout } = useAuth();
   const [dateOfBirth, setDateOfBirth] = useState("");
+  const [dateTouched, setDateTouched] = useState(false);
   const [accepted, setAccepted] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [logoutPending, setLogoutPending] = useState(false);
   const [error, setError] = useState("");
+  const dateIsValid = isAdultBirthDate(dateOfBirth);
+  const dateError =
+    dateTouched && !dateIsValid
+      ? localText(
+          locale,
+          "Enter a valid date of birth. You must be at least 18 years old.",
+          "Введіть коректну дату народження. Вам має бути щонайменше 18 років.",
+          "Wpisz prawidłową datę urodzenia. Musisz mieć co najmniej 18 lat."
+        )
+      : "";
 
   const submit = async (event: FormEvent) => {
     event.preventDefault();
-    if (!dateOfBirth || !accepted) return;
+    setDateTouched(true);
+    if (!dateIsValid || !accepted) return;
     setBusy(true);
     setError("");
     try {
@@ -44,6 +59,11 @@ export function CommunityOnboardingForm({ locale }: Readonly<{ locale: Locale }>
     }
   };
 
+  const signOut = async () => {
+    setLogoutPending(true);
+    await logout(withLocale(locale, "/"));
+  };
+
   return (
     <form onSubmit={submit} className="rounded-3xl border border-border bg-surface/90 p-6 sm:p-8">
       <div className="rounded-2xl bg-primary/10 p-4 text-sm leading-6 text-foreground">
@@ -54,18 +74,22 @@ export function CommunityOnboardingForm({ locale }: Readonly<{ locale: Locale }>
           "Prosimy o datę urodzenia wyłącznie w celu sprawdzenia minimalnego wieku 18+. Nie pokazujemy jej innym osobom i nie wpływa ona na rekomendacje."
         )}
       </div>
-      <label className="mt-6 grid gap-2 text-sm font-semibold">
-        {localText(locale, "Date of birth", "Дата народження", "Data urodzenia")}
-        <input
-          type="date"
-          required
-          value={dateOfBirth}
-          max={yearsAgo(18)}
-          min={yearsAgo(120)}
-          onChange={(event) => setDateOfBirth(event.target.value)}
-          className="h-11 rounded-xl border border-input bg-surface px-3 font-normal"
-        />
-      </label>
+      <DateOfBirthField
+        idPrefix="community-date-of-birth"
+        label={localText(locale, "Date of birth", "Дата народження", "Data urodzenia")}
+        locale={locale}
+        onChange={setDateOfBirth}
+        onBlur={() => setDateTouched(true)}
+        hint={localText(
+          locale,
+          "Enter day, month, and year. The date stays private.",
+          "Введіть день, місяць і рік. Дата залишається приватною.",
+          "Wpisz dzień, miesiąc i rok. Data pozostaje prywatna."
+        )}
+        error={dateError}
+        valid={dateTouched && dateIsValid}
+        className="mt-6"
+      />
       <label className="mt-5 flex items-start gap-3 rounded-2xl border border-border p-4 text-sm leading-6">
         <input
           type="checkbox"
@@ -97,7 +121,8 @@ export function CommunityOnboardingForm({ locale }: Readonly<{ locale: Locale }>
       ) : null}
       <div className="mt-6 flex flex-wrap gap-3">
         <button
-          disabled={busy || !accepted || !dateOfBirth}
+          type="submit"
+          disabled={busy || logoutPending || !accepted || !dateIsValid}
           className="inline-flex min-h-11 items-center justify-center rounded-xl bg-primary px-5 py-2.5 text-center text-sm font-semibold leading-snug text-primary-foreground disabled:opacity-50"
         >
           {busy
@@ -106,18 +131,15 @@ export function CommunityOnboardingForm({ locale }: Readonly<{ locale: Locale }>
         </button>
         <button
           type="button"
-          onClick={() => void logout()}
+          disabled={busy || logoutPending}
+          onClick={() => void signOut()}
           className="inline-flex min-h-11 items-center justify-center rounded-xl border border-border px-5 py-2.5 text-center text-sm font-semibold leading-snug hover:bg-muted"
         >
-          {localText(locale, "Sign out", "Вийти", "Wyloguj się")}
+          {logoutPending
+            ? localText(locale, "Signing out…", "Вихід…", "Wylogowywanie…")
+            : localText(locale, "Sign out", "Вийти", "Wyloguj się")}
         </button>
       </div>
     </form>
   );
-}
-
-function yearsAgo(years: number) {
-  const date = new Date();
-  date.setFullYear(date.getFullYear() - years);
-  return date.toISOString().slice(0, 10);
 }
