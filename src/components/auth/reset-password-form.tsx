@@ -6,6 +6,7 @@ import { useState, type FormEvent } from "react";
 
 import type { Locale } from "@/i18n/locales";
 import { withLocale } from "@/i18n/paths";
+import { isPasswordValid } from "@/lib/password";
 import type { SiteMessages } from "@/messages/types";
 import { authService } from "@/services/authService";
 
@@ -28,7 +29,7 @@ export function ResetPasswordForm({
     setConfirmError("");
     setFormError("");
     if (!token) return setFormError(labels.invalidToken);
-    if (password.length < 12 || !/\d/.test(password)) {
+    if (!isPasswordValid(password)) {
       setPasswordError(labels.weakPassword);
       return;
     }

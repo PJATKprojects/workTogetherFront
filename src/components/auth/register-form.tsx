@@ -7,6 +7,7 @@ import { useMemo, useState, type FormEvent, type ReactNode } from "react";
 import { DateOfBirthField } from "@/components/ui/date-of-birth-field";
 import { type Locale } from "@/i18n/locales";
 import { isAdultBirthDate } from "@/lib/date-of-birth";
+import { isPasswordValid } from "@/lib/password";
 import { authService } from "@/services/authService";
 
 export type RegisterFormLabels = Readonly<{
@@ -532,14 +533,10 @@ function getInputClass(base: string, touched: boolean, hasError: boolean, isVali
 function getPasswordScore(password: string) {
   if (!password) return 0;
   let score = 1;
-  if (password.length >= 12) score += 1;
+  if (password.length >= 8) score += 1;
   if (/\d/.test(password)) score += 1;
   if (password.length >= 12 || /[^A-Za-z0-9]/.test(password)) score += 1;
   return Math.min(score, 4);
-}
-
-function isPasswordValid(password: string) {
-  return password.length >= 12 && /\d/.test(password);
 }
 
 function getPasswordStrengthMeta(score: number, labels: RegisterFormLabels) {

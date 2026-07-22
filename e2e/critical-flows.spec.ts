@@ -16,6 +16,29 @@ test.describe("critical browser flows", () => {
     expect(api.signedIn).toBe(true);
   });
 
+  test("registration accepts any password with at least eight characters", async ({ page }) => {
+    await installApiMock(page);
+    await gotoAfterAuthBootstrap(page, "/en/auth/register");
+
+    await page.getByLabel("Nickname").fill("alexdev");
+    await page.getByLabel("Email").fill("alex@example.test");
+    await page.getByLabel("Day", { exact: true }).fill("01");
+    await page.getByLabel("Month", { exact: true }).fill("01");
+    await page.getByLabel("Year", { exact: true }).fill("2000");
+
+    const password = page.getByLabel("Password", { exact: true });
+    await password.fill("abcdefg");
+    await password.blur();
+    await expect(page.locator("#register-password-error")).toContainText(
+      "Use at least 8 characters"
+    );
+
+    await password.fill("abcdefgh");
+    await page.getByLabel("Confirm password", { exact: true }).fill("abcdefgh");
+    await page.getByRole("checkbox").check();
+    await expect(page.getByRole("button", { name: "Create account" })).toBeEnabled();
+  });
+
   test("OAuth invalid state is announced as a recoverable error", async ({ page }) => {
     await installApiMock(page);
     await gotoAfterAuthBootstrap(page, "/en/auth/callback?error=invalid_state");
@@ -117,8 +140,8 @@ test.describe("critical browser flows", () => {
 
     await gotoAfterAuthBootstrap(page, "/en/auth/reset-password?token=one-time-token");
 
-    await page.getByLabel("New password", { exact: true }).fill("ChangedPassword1");
-    await page.getByLabel("Confirm new password").fill("ChangedPassword1");
+    await page.getByLabel("New password", { exact: true }).fill("abcdefgh");
+    await page.getByLabel("Confirm new password").fill("abcdefgh");
     await page.getByRole("button", { name: "Update password" }).click();
 
     await expect(page.getByRole("status")).toContainText(

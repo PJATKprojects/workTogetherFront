@@ -6,6 +6,7 @@ import { useAuth } from "@/hooks/use-auth";
 import type { Locale } from "@/i18n/locales";
 import { withLocale } from "@/i18n/paths";
 import { formatDateTime } from "@/lib/format";
+import { isPasswordValid } from "@/lib/password";
 import type { SiteMessages } from "@/messages/types";
 import { authService, type AuthSessionDto, type LoginMethodsDto } from "@/services/authService";
 import {
@@ -116,7 +117,7 @@ export function SecuritySettings({
     setPasswordMessage("");
     setError("");
     setPasswordErrors({});
-    if (newPassword.length < 12 || !/\d/.test(newPassword)) {
+    if (!isPasswordValid(newPassword)) {
       setPasswordErrors({ newPassword: labels.weakPassword });
       window.requestAnimationFrame(() => document.getElementById("security-new-password")?.focus());
       return;
