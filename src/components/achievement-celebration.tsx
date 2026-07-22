@@ -21,18 +21,19 @@ const noUnlockedAchievements: string[] = [];
 const achievementToastDurationMs = 3_500;
 
 export function AchievementCelebration() {
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated, requiresCommunityOnboarding, user } = useAuth();
   const pathname = usePathname();
   const locale = pathname.split("/")[1];
   const uk = locale === "uk";
   const pl = locale === "pl";
   const [dismissedNotification, setDismissedNotification] = useState("");
+  const canLoadProgress = isAuthenticated && !requiresCommunityOnboarding;
   const query = useQuery({
     queryKey: queryKeys.onboarding.progress(),
     queryFn: onboardingService.progress,
-    enabled: isAuthenticated,
+    enabled: canLoadProgress,
     staleTime: 0,
-    refetchInterval: isAuthenticated ? 60_000 : false,
+    refetchInterval: canLoadProgress ? 60_000 : false,
   });
   const unlocked = query.data?.newlyUnlocked ?? noUnlockedAchievements;
   const notificationKey = unlocked.length ? `${user?.id ?? "unknown"}:${unlocked.join("|")}` : "";

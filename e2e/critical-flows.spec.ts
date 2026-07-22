@@ -27,6 +27,41 @@ test.describe("critical browser flows", () => {
     await expect(page.getByRole("link", { name: "Back to log in" })).toBeVisible();
   });
 
+  test("new OAuth users continue to community onboarding without an MFA gate", async ({ page }) => {
+    await installApiMock(page, {
+      authenticated: true,
+      requiresCommunityOnboarding: true,
+    });
+    await gotoAfterAuthBootstrap(page, "/en/auth/callback?returnUrl=%2Fen%2F&onboarding=1");
+
+    await expect(page).toHaveURL(/\/en\/profile\/community-onboarding$/);
+    await expect(page.getByRole("heading", { name: "One more step" })).toBeVisible();
+    await expect(page.getByRole("dialog", { name: "Confirm this sensitive action" })).toHaveCount(
+      0
+    );
+  });
+
+  test("a non-MFA 428 response does not open the MFA gate", async ({ page }) => {
+    await installApiMock(page, { authenticated: true });
+    let rejectedRequests = 0;
+    await page.route("**/api/onboarding/progress", async (route) => {
+      rejectedRequests += 1;
+      await route.fulfill({
+        status: 428,
+        contentType: "application/json",
+        body: JSON.stringify({
+          message: "Complete age verification and accept the Community Guidelines to continue.",
+        }),
+      });
+    });
+
+    await gotoAfterAuthBootstrap(page, "/en/");
+    await expect.poll(() => rejectedRequests).toBeGreaterThan(0);
+    await expect(page.getByRole("dialog", { name: "Confirm this sensitive action" })).toHaveCount(
+      0
+    );
+  });
+
   test("email confirmation is explicit and reset consumes a one-time token", async ({ page }) => {
     const api = await installApiMock(page);
     await gotoAfterAuthBootstrap(page, "/en/auth/confirm-email?token=one-time-confirm-token");

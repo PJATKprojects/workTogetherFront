@@ -171,6 +171,7 @@ export const acceptedApplication = {
 type MockOptions = {
   authenticated?: boolean;
   admin?: boolean;
+  requiresCommunityOnboarding?: boolean;
   includeProject?: boolean;
   includePublicUser?: boolean;
   includeAcceptedApplication?: boolean;
@@ -299,7 +300,7 @@ export async function installApiMock(page: Page, options: MockOptions = {}): Pro
         ? json(route, {
             token: "e2e-access-token",
             user: currentUser,
-            requiresCommunityOnboarding: false,
+            requiresCommunityOnboarding: options.requiresCommunityOnboarding ?? false,
             requiresProductOnboarding: false,
           })
         : json(route, { message: "No active session" }, 401);
@@ -310,7 +311,7 @@ export async function installApiMock(page: Page, options: MockOptions = {}): Pro
       return json(route, {
         token: "e2e-access-token",
         user: currentUser,
-        requiresCommunityOnboarding: false,
+        requiresCommunityOnboarding: options.requiresCommunityOnboarding ?? false,
         requiresProductOnboarding: false,
       });
     }

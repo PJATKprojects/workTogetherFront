@@ -141,13 +141,14 @@ api.interceptors.response.use(
     const request = error.config as RequestWithMetadata;
     if (error.response?.status === 428 && typeof window !== "undefined") {
       const body = error.response.data as { errors?: { mfa?: string[] } } | undefined;
-      window.dispatchEvent(
-        new CustomEvent("wt:mfa-required", {
-          detail: {
-            mode: body?.errors?.mfa?.[0] ?? "verification_required",
-          },
-        })
-      );
+      const mode = body?.errors?.mfa?.[0];
+      if (mode === "setup_required" || mode === "verification_required") {
+        window.dispatchEvent(
+          new CustomEvent("wt:mfa-required", {
+            detail: { mode },
+          })
+        );
+      }
     }
     const isRefresh = request.url?.includes("/api/auth/refresh");
     const isPublicAuth = /\/api\/auth\/(login|register|confirm-email)/.test(request.url ?? "");
