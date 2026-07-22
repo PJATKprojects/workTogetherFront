@@ -41,6 +41,10 @@ export function proxy(request: NextRequest) {
     return NextResponse.next({ request: { headers: requestHeaders } });
   }
 
+  if (pathname === "/health" || pathname.startsWith("/health/")) {
+    return NextResponse.next();
+  }
+
   if (pathname.startsWith("/_next") || PUBLIC_FILE.test(pathname)) {
     return NextResponse.next();
   }
