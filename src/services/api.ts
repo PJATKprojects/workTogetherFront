@@ -92,6 +92,11 @@ function newCorrelationId() {
 api.interceptors.request.use((config) => {
   const request = config as RequestWithMetadata;
   const token = tokenStore.get();
+  // The instance defaults to JSON. Keeping that header on FormData makes some
+  // adapters serialize the upload instead of adding a multipart boundary.
+  if (typeof FormData !== "undefined" && config.data instanceof FormData) {
+    config.headers.delete("Content-Type");
+  }
   // Authenticated responses are user-specific and must never be reused for
   // another account. React Query owns their in-memory caching instead.
   const cacheable = !token && config.method?.toLowerCase() === "get";

@@ -14,7 +14,11 @@ export function getApiError(error: unknown, fallback = "Unknown error"): ErrorRe
     const data = error.response.data;
     if (data && typeof data === "object") {
       const candidate = data as Partial<ErrorResponse> & { error?: string };
-      const fieldMessages = candidate.errors ? Object.values(candidate.errors).flat() : [];
+      const fieldMessages = candidate.errors
+        ? Object.entries(candidate.errors)
+            .filter(([key]) => key !== "planLimit")
+            .flatMap(([, messages]) => messages)
+        : [];
       return {
         message:
           [candidate.message || candidate.error, ...fieldMessages].filter(Boolean).join(" ") ||
@@ -25,6 +29,12 @@ export function getApiError(error: unknown, fallback = "Unknown error"): ErrorRe
   }
 
   return { message: fallback };
+}
+
+export function getPlanLimitCode(error: unknown) {
+  if (!axios.isAxiosError(error) || error.response?.status !== 402) return undefined;
+  const data = error.response.data as { errors?: { planLimit?: string[] } } | undefined;
+  return data?.errors?.planLimit?.[0];
 }
 
 export function getApiStatus(error: unknown) {

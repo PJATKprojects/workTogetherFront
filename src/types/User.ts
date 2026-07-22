@@ -79,6 +79,10 @@ export interface UpdateUserProfileDto {
   cv: string;
   isLookingForTeam: boolean;
   technologyIds: number[];
+  skills: Array<{
+    technologyId: number;
+    level: "beginner" | "intermediate" | "advanced";
+  }>;
   socialLinks: SocialLink[];
   locale: Locale;
   timeZone: string;
@@ -93,6 +97,10 @@ export interface UpdateUserProfileDto {
   workPace: string;
   communicationStyle: string;
   accessibilityNeeds: string;
+  onboardingIntent: "join" | "find_people" | "both" | "";
+  primaryRoleId: number | null;
+  preferredWorkFormat: "remote" | "local" | "hybrid" | "";
+  availableStartDate: string | null;
 }
 
 export interface UserFilters extends PaginationParams {

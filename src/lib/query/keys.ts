@@ -41,6 +41,10 @@ export const queryKeys = {
     all: ["onboarding"] as const,
     progress: () => [...queryKeys.onboarding.all, "progress"] as const,
   },
+  billing: {
+    all: ["billing"] as const,
+    overview: () => [...queryKeys.billing.all, "overview"] as const,
+  },
   lookups: {
     all: ["lookups"] as const,
     roles: () => [...queryKeys.lookups.all, "roles"] as const,

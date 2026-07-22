@@ -13,10 +13,7 @@ export const fileService = {
   upload: async (file: File) => {
     const form = new FormData();
     form.append("file", file);
-    const response = await api.post<FileUploadResult>("/api/files", form, {
-      // Let the browser set the multipart boundary.
-      headers: { "Content-Type": undefined as unknown as string },
-    });
+    const response = await api.post<FileUploadResult>("/api/files", form);
     return response.data;
   },
 };

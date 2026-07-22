@@ -98,7 +98,7 @@ export function CommunityOnboardingForm({ locale }: Readonly<{ locale: Locale }>
       <div className="mt-6 flex flex-wrap gap-3">
         <button
           disabled={busy || !accepted || !dateOfBirth}
-          className="rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground disabled:opacity-50"
+          className="inline-flex min-h-11 items-center justify-center rounded-xl bg-primary px-5 py-2.5 text-center text-sm font-semibold leading-snug text-primary-foreground disabled:opacity-50"
         >
           {busy
             ? localText(locale, "Saving…", "Збереження…", "Zapisywanie…")
@@ -107,7 +107,7 @@ export function CommunityOnboardingForm({ locale }: Readonly<{ locale: Locale }>
         <button
           type="button"
           onClick={() => void logout()}
-          className="rounded-xl border border-border px-5 py-2.5 text-sm font-semibold hover:bg-muted"
+          className="inline-flex min-h-11 items-center justify-center rounded-xl border border-border px-5 py-2.5 text-center text-sm font-semibold leading-snug hover:bg-muted"
         >
           {localText(locale, "Sign out", "Вийти", "Wyloguj się")}
         </button>

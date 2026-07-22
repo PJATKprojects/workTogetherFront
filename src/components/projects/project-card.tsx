@@ -13,6 +13,7 @@ import { formatDate } from "@/lib/format";
 import { projectHealthTone } from "@/lib/project-quality";
 import type { SiteMessages } from "@/messages/types";
 import type { ProjectListItem } from "@/types";
+import { proCopy } from "@/i18n/pro-copy";
 
 export function ProjectCard({
   project,
@@ -28,6 +29,7 @@ export function ProjectCard({
   ownerControls?: React.ReactNode;
 }>) {
   const exact = projectCopy(locale);
+  const planText = proCopy(locale);
 
   return (
     <article className="group flex h-full flex-col rounded-3xl border border-border bg-surface/85 p-5 shadow-[0_18px_45px_-32px_rgb(15_23_42/0.45)] transition duration-200 hover:-translate-y-1 hover:border-primary/40 hover:shadow-[0_25px_55px_-30px_rgb(37_99_235/0.35)] motion-reduce:transform-none">
@@ -43,6 +45,9 @@ export function ProjectCard({
             <Badge tone="neutral">{labels.hiddenProject}</Badge>
           ) : project.isRecruitmentClosed ? (
             <Badge tone="neutral">{labels.recruitmentClosed}</Badge>
+          ) : null}
+          {ownerView && project.planRestrictionCode === "free_active_project_limit" ? (
+            <Badge tone="yellow">{planText.limitedProjectTitle}</Badge>
           ) : null}
         </div>
         <div className="flex items-center gap-2">
@@ -61,6 +66,18 @@ export function ProjectCard({
       <h2 className="mt-4 text-xl font-semibold tracking-tight text-foreground transition-colors duration-200 group-hover:text-primary-text">
         {project.projectName}
       </h2>
+
+      {ownerView && project.planRestrictionCode === "free_active_project_limit" ? (
+        <div className="mt-3 rounded-xl border border-warning/35 bg-warning-soft p-3 text-xs leading-5 text-warning-soft-foreground">
+          <p>{planText.limitedProjectBody}</p>
+          <Link
+            href={withLocale(locale, "/pro")}
+            className="mt-2 inline-flex font-semibold underline underline-offset-2"
+          >
+            {planText.upgrade}
+          </Link>
+        </div>
+      ) : null}
 
       <section className="mt-3">
         <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">

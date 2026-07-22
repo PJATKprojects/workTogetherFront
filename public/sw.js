@@ -1,6 +1,7 @@
-const VERSION = "worktogether-shell-v3";
-const ASSET_CACHE = "worktogether-assets-v3";
+const VERSION = "worktogether-shell-v4";
+const ASSET_CACHE = "worktogether-assets-v4";
 const OFFLINE_PAGES = ["/en/offline", "/uk/offline", "/pl/offline"];
+const LOOPBACK_HOSTS = new Set(["localhost", "127.0.0.1", "::1", "[::1]"]);
 
 async function localizedOfflineResponse(locale) {
   const cached = (await caches.match(`/${locale}/offline`)) ?? (await caches.match("/en/offline"));
@@ -54,6 +55,14 @@ self.addEventListener("fetch", (event) => {
 
   const url = new URL(request.url);
   if (url.origin !== self.location.origin || url.pathname.startsWith("/api/")) {
+    return;
+  }
+
+  // Next.js development chunk names are not content-addressed. Caching them on
+  // loopback can mix Turbopack/HMR generations and cause reload loops in
+  // Firefox. Production assets remain cacheable because their filenames are
+  // immutable build hashes.
+  if (LOOPBACK_HOSTS.has(self.location.hostname) && url.pathname.startsWith("/_next/")) {
     return;
   }
 

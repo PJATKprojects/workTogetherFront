@@ -7,7 +7,16 @@ export function resolveFileUrl(url: string | null | undefined): string {
   if (!url) return "";
   if (url.startsWith("/")) {
     const base = (process.env.NEXT_PUBLIC_API_URL ?? "").replace(/\/$/, "");
-    return `${base}${url}`;
+    // A relative API base already points at this origin. The stored URL is
+    // rooted at `/api`, so prefixing `/api` again would create `/api/api/...`.
+    if (!base || base.startsWith("/")) return url;
+    try {
+      // Stored paths already contain `/api`; only borrow the configured API
+      // origin, never its path segment.
+      return new URL(url, new URL(base).origin).toString();
+    } catch {
+      return `${base.replace(/\/api$/i, "")}${url}`;
+    }
   }
   return url;
 }

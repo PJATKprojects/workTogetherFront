@@ -9,6 +9,7 @@ export function useApplicationMutations(projectId?: number) {
   const queryClient = useQueryClient();
   const invalidate = async () => {
     await queryClient.invalidateQueries({ queryKey: queryKeys.applications.all });
+    await queryClient.invalidateQueries({ queryKey: queryKeys.billing.all });
     await queryClient.invalidateQueries({ queryKey: queryKeys.onboarding.all });
     if (projectId) {
       await queryClient.invalidateQueries({ queryKey: queryKeys.projects.detail(projectId) });

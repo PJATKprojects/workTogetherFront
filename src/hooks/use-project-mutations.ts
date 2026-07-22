@@ -10,6 +10,7 @@ export function useProjectMutations(projectId?: number) {
   const queryClient = useQueryClient();
   const invalidate = async () => {
     await queryClient.invalidateQueries({ queryKey: queryKeys.projects.all });
+    await queryClient.invalidateQueries({ queryKey: queryKeys.billing.all });
     if (projectId) {
       await queryClient.invalidateQueries({ queryKey: queryKeys.projects.detail(projectId) });
     }

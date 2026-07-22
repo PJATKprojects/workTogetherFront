@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 
 import { MyApplicationList } from "@/components/applications/application-list";
 import { AuthGuard } from "@/components/auth/auth-guard";
+import { PlanSummaryCard } from "@/components/billing/plan-summary-card";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { BackLink } from "@/components/ui/back-link";
@@ -29,7 +30,10 @@ export default async function ApplicationsPage({
             <BackLink href={`/${raw}/profile`} label={t.common.back} />
             <h1 className="text-3xl font-semibold">{t.applications.title}</h1>
             <p className="mt-2 mb-7 text-muted-foreground">{t.applications.subtitle}</p>
-            <MyApplicationList locale={raw} messages={t} />
+            <PlanSummaryCard locale={raw} />
+            <div className="mt-8">
+              <MyApplicationList locale={raw} messages={t} />
+            </div>
           </main>
         </AuthGuard>
       </Suspense>

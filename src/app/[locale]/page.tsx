@@ -365,6 +365,12 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
                 >
                   {t.footer.howItWorks}
                 </Link>
+                <Link
+                  className="text-muted-foreground transition-colors hover:text-foreground"
+                  href={withLocale(locale, "/install")}
+                >
+                  {t.footer.install}
+                </Link>
               </div>
             </div>
 

@@ -14,7 +14,8 @@ import { localizeRole, localizeStatus } from "@/i18n/lookups";
 import { localText, type Locale } from "@/i18n/locales";
 import { withLocale } from "@/i18n/paths";
 import { formatDate } from "@/lib/format";
-import { getApiError } from "@/lib/api-error";
+import { getApiError, getPlanLimitCode } from "@/lib/api-error";
+import { proCopy } from "@/i18n/pro-copy";
 import type { SiteMessages } from "@/messages/types";
 import type { ApplicationDto, UpdateApplicationDraftDto } from "@/types";
 
@@ -40,6 +41,7 @@ export function ApplicationCard({
   const [confirmWithdraw, setConfirmWithdraw] = useState(false);
   const [editingDraft, setEditingDraft] = useState(false);
   const [error, setError] = useState("");
+  const [planLimited, setPlanLimited] = useState(false);
   const pending = [1, 5, 6, 7, 8].includes(application.status.id);
   const [canExpire, setCanExpire] = useState(false);
 
@@ -310,11 +312,11 @@ export function ApplicationCard({
                 disabled={submitDraft.isPending}
                 onClick={() => {
                   setError("");
-                  void submitDraft
-                    .mutateAsync(application.id)
-                    .catch((reason) =>
-                      setError(getApiError(reason, messages.errors.generic).message)
-                    );
+                  setPlanLimited(false);
+                  void submitDraft.mutateAsync(application.id).catch((reason) => {
+                    setPlanLimited(Boolean(getPlanLimitCode(reason)));
+                    setError(getApiError(reason, messages.errors.generic).message);
+                  });
                 }}
               >
                 {localText(locale, "Submit draft", "Надіслати чернетку", "Wyślij wersję roboczą")}
@@ -364,7 +366,19 @@ export function ApplicationCard({
           }}
         />
       ) : null}
-      {error ? <p className="mt-3 text-sm text-destructive">{error}</p> : null}
+      {error ? (
+        <div className="mt-3 text-sm text-destructive">
+          <p>{error}</p>
+          {planLimited ? (
+            <Link
+              href={withLocale(locale, "/pro")}
+              className="mt-1 inline-flex font-semibold underline underline-offset-2"
+            >
+              {proCopy(locale).upgrade}
+            </Link>
+          ) : null}
+        </div>
+      ) : null}
       <ConfirmDialog
         open={confirmWithdraw}
         title={messages.applications.withdraw}

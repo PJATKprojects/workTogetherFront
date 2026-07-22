@@ -5,7 +5,7 @@ import { BrandMark } from "@/components/brand/logo";
 import { NavbarLocaleMenu } from "@/components/navbar-locale-menu";
 import { NavbarThemeToggle } from "@/components/navbar-theme-toggle";
 import { SkipLink } from "@/components/ui/skip-link";
-import type { Locale } from "@/i18n/locales";
+import { localText, type Locale } from "@/i18n/locales";
 import { withLocale } from "@/i18n/paths";
 import type { SiteMessages } from "@/messages/types";
 
@@ -29,6 +29,7 @@ export function SiteHeader({ locale, nav }: Props) {
         <div className="relative z-10 flex min-w-0 flex-1 items-center gap-2 xl:flex-none xl:gap-6">
           <Link
             href={withLocale(locale, "/")}
+            aria-label={nav.brandWordmark}
             className="-m-1.5 flex shrink-0 items-center gap-2 p-1.5 font-semibold tracking-tight transition-opacity hover:opacity-80"
           >
             <BrandMark className="size-8" rounded="rounded-lg" />
@@ -75,6 +76,12 @@ export function SiteHeader({ locale, nav }: Props) {
               >
                 {nav.howItWorks}
               </Link>
+              <Link
+                href={withLocale(locale, "/pro")}
+                className="rounded-xl px-3 py-2 text-sm font-semibold text-primary-text transition hover:bg-primary-soft"
+              >
+                {localText(locale, "Pro", "Pro", "Pro")}
+              </Link>
             </nav>
           </details>
         </div>
@@ -97,6 +104,12 @@ export function SiteHeader({ locale, nav }: Props) {
             className="link-underline-anim rounded-lg px-3 py-1.5 transition-colors hover:text-foreground"
           >
             {nav.howItWorks}
+          </Link>
+          <Link
+            href={withLocale(locale, "/pro")}
+            className="link-underline-anim rounded-lg px-3 py-1.5 font-semibold text-primary-text transition-colors hover:text-primary"
+          >
+            Pro
           </Link>
         </nav>
 

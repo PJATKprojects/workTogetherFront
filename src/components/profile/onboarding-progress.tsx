@@ -12,6 +12,10 @@ export function OnboardingProgress({ locale }: Readonly<{ locale: Locale }>) {
   });
   if (!query.data) return null;
   const progress = query.data;
+  const completed =
+    progress.profileProgressPercent >= 100 ||
+    (progress.steps.length > 0 && progress.steps.every((step) => step.completed));
+  if (completed) return null;
   return (
     <section className="mt-6 rounded-2xl border border-border bg-surface/80 p-5">
       {progress.newlyUnlocked.length ? (

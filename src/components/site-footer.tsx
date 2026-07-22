@@ -19,6 +19,7 @@ export function SiteFooter({
   const productLinks = [
     { href: withLocale(locale, "/projects"), label: footer.projects },
     { href: withLocale(locale, "/how-it-works"), label: footer.howItWorks },
+    { href: withLocale(locale, "/install"), label: footer.install },
   ];
 
   return (

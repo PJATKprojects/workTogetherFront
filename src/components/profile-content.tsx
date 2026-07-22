@@ -11,6 +11,7 @@ import { localText, type Locale } from "@/i18n/locales";
 import { withLocale } from "@/i18n/paths";
 import type { SiteMessages } from "@/messages/types";
 import { OnboardingProgress } from "@/components/profile/onboarding-progress";
+import { PlanSummaryCard } from "@/components/billing/plan-summary-card";
 
 export function ProfileContent({
   locale,
@@ -74,6 +75,7 @@ export function ProfileContent({
           <ProfileField key={label} label={label} value={value} />
         ))}
       </div>
+      <PlanSummaryCard locale={locale} />
       <div className="mt-6 flex flex-wrap gap-3">
         <Link
           href={withLocale(locale, "/profile/edit")}

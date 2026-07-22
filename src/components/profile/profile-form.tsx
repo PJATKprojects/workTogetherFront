@@ -11,7 +11,8 @@ import { TechnologyPicker } from "@/components/ui/technology-picker";
 import { Textarea } from "@/components/ui/textarea";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { useProfileMutation } from "@/hooks/use-profile-mutation";
-import { useTechnologiesQuery } from "@/hooks/use-lookups-query";
+import { useRolesQuery, useTechnologiesQuery } from "@/hooks/use-lookups-query";
+import { localizeRole } from "@/i18n/lookups";
 import { localText } from "@/i18n/locales";
 import { getApiError } from "@/lib/api-error";
 import { SOCIAL_NETWORKS, socialLabel } from "@/lib/socials";
@@ -30,20 +31,24 @@ const profileFieldNames = [
   "cv",
 ] as const;
 type ProfileField = (typeof profileFieldNames)[number];
+type SkillLevel = PrivateUser["skills"][number]["level"];
 
 export function ProfileForm({
   profile,
   messages,
 }: Readonly<{ profile: PrivateUser; messages: SiteMessages }>) {
   const technologies = useTechnologiesQuery();
+  const roles = useRolesQuery();
   const mutation = useProfileMutation();
   const router = useRouter();
   const initialTechnologyIds = useMemo(
     () =>
-      technologies.data
-        ?.filter((item) => profile.technologies.includes(item.name))
-        .map((item) => item.id) ?? [],
-    [profile.technologies, technologies.data]
+      profile.skills.length > 0
+        ? profile.skills.map((skill) => skill.technologyId)
+        : (technologies.data
+            ?.filter((item) => profile.technologies.includes(item.name))
+            .map((item) => item.id) ?? []),
+    [profile.skills, profile.technologies, technologies.data]
   );
   const [userName, setUserName] = useState(profile.userName);
   const [userDescription, setUserDescription] = useState(profile.userDescription ?? "");
@@ -53,6 +58,12 @@ export function ProfileForm({
   const [cv, setCv] = useState(profile.cv ?? "");
   const [isLookingForTeam, setIsLookingForTeam] = useState(profile.isLookingForTeam);
   const [technologyIds, setTechnologyIds] = useState<number[] | null>(null);
+  const [skillLevels, setSkillLevels] = useState<Record<number, SkillLevel>>(
+    () =>
+      Object.fromEntries(
+        profile.skills.map((skill) => [skill.technologyId, skill.level])
+      ) as Record<number, SkillLevel>
+  );
   const [socialLinks, setSocialLinks] = useState<SocialLink[]>(profile.socialLinks ?? []);
   const [socialType, setSocialType] = useState(SOCIAL_NETWORKS[0].id);
   const [socialHandle, setSocialHandle] = useState("");
@@ -69,11 +80,30 @@ export function ProfileForm({
   const [workPace, setWorkPace] = useState(profile.workPace);
   const [communicationStyle, setCommunicationStyle] = useState(profile.communicationStyle);
   const [accessibilityNeeds, setAccessibilityNeeds] = useState(profile.accessibilityNeeds);
+  const [onboardingIntent, setOnboardingIntent] = useState<PrivateUser["onboardingIntent"]>(
+    profile.onboardingIntent
+  );
+  const [primaryRoleId, setPrimaryRoleId] = useState(profile.primaryRoleId?.toString() ?? "");
+  const [preferredWorkFormat, setPreferredWorkFormat] = useState<
+    PrivateUser["preferredWorkFormat"]
+  >(profile.preferredWorkFormat);
+  const [availableStartDate, setAvailableStartDate] = useState(profile.availableStartDate ?? "");
   const [message, setMessage] = useState("");
   const [fieldErrors, setFieldErrors] = useState<Partial<Record<ProfileField, string>>>({});
   const [avatarUploading, setAvatarUploading] = useState(false);
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const selectedTechnologyIds = technologyIds ?? initialTechnologyIds;
+
+  const updateTechnologies = (nextTechnologyIds: number[]) => {
+    setTechnologyIds(nextTechnologyIds);
+    setSkillLevels((current) => {
+      const next = { ...current };
+      for (const technologyId of nextTechnologyIds) {
+        next[technologyId] ??= "beginner";
+      }
+      return next;
+    });
+  };
 
   const addSocialLink = () => {
     const handle = socialHandle.trim().replace(/^@/, "");
@@ -140,6 +170,10 @@ export function ProfileForm({
       cv: cv.trim(),
       isLookingForTeam,
       technologyIds: selectedTechnologyIds,
+      skills: selectedTechnologyIds.map((technologyId) => ({
+        technologyId,
+        level: skillLevels[technologyId] ?? "beginner",
+      })),
       socialLinks,
       locale: profile.locale,
       timeZone: timeZone.trim() || "UTC",
@@ -157,6 +191,10 @@ export function ProfileForm({
       workPace: workPace.trim(),
       communicationStyle: communicationStyle.trim(),
       accessibilityNeeds: accessibilityNeeds.trim(),
+      onboardingIntent,
+      primaryRoleId: primaryRoleId ? Number(primaryRoleId) : null,
+      preferredWorkFormat,
+      availableStartDate: availableStartDate || null,
     };
     const result = schema.safeParse({ ...payload, socialLinks: undefined });
     if (!result.success) {
@@ -354,7 +392,7 @@ export function ProfileForm({
           <span>{messages.profile.technologies}</span>
           <TechnologyPicker
             selected={selectedTechnologyIds}
-            onChange={setTechnologyIds}
+            onChange={updateTechnologies}
             labels={{
               placeholder: messages.profile.technologiesSelect,
               searchPlaceholder: messages.profile.technologiesSearch,
@@ -363,6 +401,56 @@ export function ProfileForm({
               genericError: messages.errors.generic,
             }}
           />
+          {selectedTechnologyIds.length > 0 ? (
+            <div className="mt-2 grid gap-2 rounded-2xl border border-border bg-surface-muted p-3 sm:grid-cols-2">
+              {selectedTechnologyIds.map((technologyId) => {
+                const technology = technologies.data?.find((item) => item.id === technologyId);
+                const name =
+                  technology?.name ??
+                  profile.skills.find((skill) => skill.technologyId === technologyId)?.name ??
+                  `#${technologyId}`;
+                return (
+                  <label
+                    key={technologyId}
+                    className="flex items-center justify-between gap-3 text-sm"
+                  >
+                    <span className="min-w-0 truncate font-medium">{name}</span>
+                    <select
+                      value={skillLevels[technologyId] ?? "beginner"}
+                      aria-label={`${name}: ${localText(
+                        profile.locale,
+                        "skill level",
+                        "рівень навички",
+                        "poziom umiejętności"
+                      )}`}
+                      onChange={(event) =>
+                        setSkillLevels((current) => ({
+                          ...current,
+                          [technologyId]: event.target.value as SkillLevel,
+                        }))
+                      }
+                      className="focus-ring h-9 shrink-0 rounded-lg border border-input bg-surface px-2 text-xs"
+                    >
+                      <option value="beginner">
+                        {localText(profile.locale, "Beginner", "Початковий", "Początkujący")}
+                      </option>
+                      <option value="intermediate">
+                        {localText(
+                          profile.locale,
+                          "Intermediate",
+                          "Середній",
+                          "Średniozaawansowany"
+                        )}
+                      </option>
+                      <option value="advanced">
+                        {localText(profile.locale, "Advanced", "Просунутий", "Zaawansowany")}
+                      </option>
+                    </select>
+                  </label>
+                );
+              })}
+            </div>
+          ) : null}
         </div>
         <fieldset className="rounded-2xl border border-border p-4 sm:col-span-2">
           <legend className="px-1 text-base font-semibold">
@@ -382,6 +470,108 @@ export function ProfileForm({
             )}
           </p>
           <div className="mt-4 grid gap-4 sm:grid-cols-2">
+            <label className="grid gap-1.5 text-sm">
+              <span>
+                {localText(
+                  profile.locale,
+                  "What I want to do",
+                  "Що я хочу робити",
+                  "Co chcę robić"
+                )}{" "}
+                <span className="text-muted-foreground">({messages.profile.optional})</span>
+              </span>
+              <select
+                value={onboardingIntent}
+                onChange={(event) =>
+                  setOnboardingIntent(event.target.value as PrivateUser["onboardingIntent"])
+                }
+                className="focus-ring h-10 rounded-xl border border-input bg-surface px-3"
+              >
+                <option value="">{messages.common.notSpecified}</option>
+                <option value="join">
+                  {localText(
+                    profile.locale,
+                    "Join a project",
+                    "Приєднатися до проєкту",
+                    "Dołączyć do projektu"
+                  )}
+                </option>
+                <option value="find_people">
+                  {localText(
+                    profile.locale,
+                    "Find people for my idea",
+                    "Знайти людей для своєї ідеї",
+                    "Znaleźć ludzi do mojego pomysłu"
+                  )}
+                </option>
+                <option value="both">
+                  {localText(profile.locale, "Both", "І те, й інше", "Jedno i drugie")}
+                </option>
+              </select>
+            </label>
+            <label className="grid gap-1.5 text-sm">
+              <span>
+                {localText(profile.locale, "Primary role", "Основна роль", "Główna rola")}{" "}
+                <span className="text-muted-foreground">({messages.profile.optional})</span>
+              </span>
+              <select
+                value={primaryRoleId}
+                onChange={(event) => setPrimaryRoleId(event.target.value)}
+                className="focus-ring h-10 rounded-xl border border-input bg-surface px-3"
+              >
+                <option value="">{messages.common.notSpecified}</option>
+                {roles.data?.map((role) => (
+                  <option key={role.id} value={role.id}>
+                    {localizeRole(role, profile.locale)}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="grid gap-1.5 text-sm">
+              <span>
+                {localText(
+                  profile.locale,
+                  "Preferred work format",
+                  "Бажаний формат роботи",
+                  "Preferowany tryb pracy"
+                )}{" "}
+                <span className="text-muted-foreground">({messages.profile.optional})</span>
+              </span>
+              <select
+                value={preferredWorkFormat}
+                onChange={(event) =>
+                  setPreferredWorkFormat(event.target.value as PrivateUser["preferredWorkFormat"])
+                }
+                className="focus-ring h-10 rounded-xl border border-input bg-surface px-3"
+              >
+                <option value="">{messages.common.notSpecified}</option>
+                <option value="remote">
+                  {localText(profile.locale, "Remote", "Віддалено", "Zdalnie")}
+                </option>
+                <option value="local">
+                  {localText(profile.locale, "Local", "Локально", "Stacjonarnie")}
+                </option>
+                <option value="hybrid">
+                  {localText(profile.locale, "Hybrid", "Гібридно", "Hybrydowo")}
+                </option>
+              </select>
+            </label>
+            <label className="grid gap-1.5 text-sm">
+              <span>
+                {localText(
+                  profile.locale,
+                  "Available start date",
+                  "Дата, з якої я доступний(-а)",
+                  "Data rozpoczęcia"
+                )}{" "}
+                <span className="text-muted-foreground">({messages.profile.optional})</span>
+              </span>
+              <Input
+                type="date"
+                value={availableStartDate}
+                onChange={(event) => setAvailableStartDate(event.target.value)}
+              />
+            </label>
             <label className="grid gap-1.5 text-sm">
               {localText(profile.locale, "Timezone", "Часовий пояс", "Strefa czasowa")}
               <Input

@@ -368,6 +368,11 @@ function notificationTitle(type: string, locale: Locale) {
       uk: "Рішення модерації",
       pl: "Decyzja moderacji",
     },
+    plan_limit_applied: {
+      en: "Plan limits changed",
+      uk: "Ліміти плану змінилися",
+      pl: "Limity planu zmieniły się",
+    },
   };
   return labels[type]?.[locale] ?? type;
 }

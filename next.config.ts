@@ -1,7 +1,9 @@
 import type { NextConfig } from "next";
 
 const apiProxyTarget = process.env.API_PROXY_TARGET?.replace(/\/$/, "");
-const browserApiTarget = (apiProxyTarget ?? process.env.NEXT_PUBLIC_API_URL ?? "").replace(
+const upgradeInsecureRequests =
+  process.env.NODE_ENV === "production" && process.env.CSP_UPGRADE_INSECURE_REQUESTS !== "false";
+const browserApiTarget = (process.env.NEXT_PUBLIC_API_URL ?? apiProxyTarget ?? "").replace(
   /\/$/,
   ""
 );
@@ -36,7 +38,9 @@ const contentSecurityPolicy = [
     process.env.NODE_ENV === "production" ? "" : " 'unsafe-eval'"
   }`,
   "style-src 'self' 'unsafe-inline'",
-  "img-src 'self' data: blob: https://avatars.githubusercontent.com https://lh3.googleusercontent.com",
+  `img-src 'self' data: blob: https://avatars.githubusercontent.com https://lh3.googleusercontent.com${
+    apiOrigin ? ` ${apiOrigin}` : ""
+  }`,
   "font-src 'self' data:",
   `connect-src 'self'${apiOrigin ? ` ${apiOrigin}` : ""}${
     apiWebSocketOrigin ? ` ${apiWebSocketOrigin}` : ""
@@ -44,7 +48,7 @@ const contentSecurityPolicy = [
   "manifest-src 'self'",
   "worker-src 'self' blob:",
   "media-src 'self' blob:",
-  ...(process.env.NODE_ENV === "production" ? ["upgrade-insecure-requests"] : []),
+  ...(upgradeInsecureRequests ? ["upgrade-insecure-requests"] : []),
 ].join("; ");
 
 const nextConfig: NextConfig = {

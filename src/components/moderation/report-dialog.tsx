@@ -79,7 +79,7 @@ export function ReportDialog({
           setOpen(true);
           setMessage("");
         }}
-        className={`focus-ring rounded-xl border border-border px-3 py-2 text-sm font-semibold hover:bg-muted ${className}`}
+        className={`focus-ring inline-flex items-center justify-center rounded-xl border border-border px-3 py-2 text-center text-sm font-semibold leading-snug hover:bg-muted ${className}`}
       >
         {localText(locale, "Report", "Поскаржитися", "Zgłoś")}
       </button>
@@ -126,7 +126,7 @@ export function ReportDialog({
                   <button
                     type="button"
                     onClick={close}
-                    className="focus-ring rounded-lg px-2 py-1 text-xl text-muted-foreground hover:bg-muted"
+                    className="focus-ring inline-flex size-10 items-center justify-center rounded-lg text-center text-xl leading-none text-muted-foreground hover:bg-muted"
                     aria-label={localText(locale, "Close", "Закрити", "Zamknij")}
                   >
                     ×
@@ -176,13 +176,13 @@ export function ReportDialog({
                   <button
                     type="button"
                     onClick={close}
-                    className="focus-ring rounded-xl border border-border px-4 py-2 text-sm font-semibold hover:bg-muted"
+                    className="focus-ring inline-flex min-h-10 items-center justify-center rounded-xl border border-border px-4 py-2 text-center text-sm font-semibold leading-snug hover:bg-muted"
                   >
                     {localText(locale, "Cancel", "Закрити", "Anuluj")}
                   </button>
                   <button
                     disabled={busy}
-                    className="focus-ring rounded-xl bg-destructive px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
+                    className="focus-ring inline-flex min-h-10 items-center justify-center rounded-xl bg-destructive px-4 py-2 text-center text-sm font-semibold leading-snug text-white disabled:opacity-50"
                   >
                     {busy
                       ? "…"

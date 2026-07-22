@@ -2,6 +2,19 @@
 
 @variant dark (.dark &);
 
+@layer base {
+  /*
+   * Keep action labels centered across browsers and when they wrap. Explicit
+   * text-left controls remain untouched for list rows, cards, and similar items.
+   */
+  button:not(.text-left) {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+  }
+}
+
 /* ============================================================================
    DESIGN TOKENS — WorkTogether
    Source: design-system/worktogether/MASTER.md (ui-ux-pro-max)

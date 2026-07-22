@@ -36,15 +36,15 @@ export interface DocumentImportPreview {
 
 export interface CompleteOnboardingPayload {
   intent: OnboardingIntent;
-  primaryRoleId: number;
+  primaryRoleId?: number;
   skills: OnboardingSkillInput[];
   timeZone: string;
   utcOffsetMinutes: number;
   languages: string[];
-  hoursPerWeek: number;
-  format: WorkFormat;
+  hoursPerWeek?: number;
+  format?: WorkFormat;
   goal: string;
-  startDate: string;
+  startDate?: string;
   reviewedGithubImport?: GithubImportPreview;
 }
 

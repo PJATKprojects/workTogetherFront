@@ -1,5 +1,6 @@
 import type { Page, Route } from "@playwright/test";
 
+import type { OnboardingProgress } from "../src/services/onboardingService";
 import type { ProjectDetail } from "../src/types";
 
 export const testUser = {
@@ -17,7 +18,12 @@ export const testUser = {
   isAdmin: false,
   createdAt: "2026-01-01T12:00:00Z",
   technologies: ["TypeScript", "React"],
+  skills: [
+    { technologyId: 5, name: "React", level: "intermediate" },
+    { technologyId: 6, name: "TypeScript", level: "intermediate" },
+  ],
   socialLinks: [],
+  verificationBadges: [],
   locale: "en",
   timeZone: "Europe/Warsaw",
   utcOffsetMinutes: 120,
@@ -31,6 +37,12 @@ export const testUser = {
   workPace: "steady",
   communicationStyle: "async",
   accessibilityNeeds: "",
+  onboardingIntent: "both",
+  primaryRoleId: 3,
+  preferredWorkFormat: "remote",
+  availableStartDate: null,
+  productOnboardingCompletedAt: "2026-01-01T12:00:00Z",
+  githubUsername: "example",
 } as const;
 
 export const publicUser = {
@@ -102,6 +114,7 @@ export const project = {
   lastOwnerActivityAt: "2026-07-15T12:00:00Z",
   freshnessReviewRequiredAt: null,
   staleRecruitmentClosedAt: null,
+  planRestrictionCode: null,
   qualityScore: 90,
   qualitySuggestions: [],
   changesSinceLastVisit: [],
@@ -161,6 +174,7 @@ type MockOptions = {
   includeProject?: boolean;
   includePublicUser?: boolean;
   includeAcceptedApplication?: boolean;
+  onboardingProgress?: OnboardingProgress;
 };
 
 type MockState = {
@@ -286,6 +300,7 @@ export async function installApiMock(page: Page, options: MockOptions = {}): Pro
             token: "e2e-access-token",
             user: currentUser,
             requiresCommunityOnboarding: false,
+            requiresProductOnboarding: false,
           })
         : json(route, { message: "No active session" }, 401);
     }
@@ -296,6 +311,7 @@ export async function installApiMock(page: Page, options: MockOptions = {}): Pro
         token: "e2e-access-token",
         user: currentUser,
         requiresCommunityOnboarding: false,
+        requiresProductOnboarding: false,
       });
     }
 
@@ -328,12 +344,15 @@ export async function installApiMock(page: Page, options: MockOptions = {}): Pro
     }
 
     if (path === "/api/onboarding/progress") {
-      return json(route, {
-        profileProgressPercent: 50,
-        steps: [],
-        achievements: [],
-        newlyUnlocked: [],
-      });
+      return json(
+        route,
+        options.onboardingProgress ?? {
+          profileProgressPercent: 50,
+          steps: [],
+          achievements: [],
+          newlyUnlocked: [],
+        }
+      );
     }
 
     if (path === "/api/admin/operations/overview" && method === "GET") {

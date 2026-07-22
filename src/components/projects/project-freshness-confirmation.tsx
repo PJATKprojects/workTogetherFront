@@ -146,7 +146,7 @@ export function ProjectFreshnessConfirmation({
               type="button"
               disabled={Boolean(busy)}
               onClick={() => void confirm("active")}
-              className="focus-ring min-h-12 rounded-xl bg-primary px-5 font-semibold text-primary-foreground disabled:opacity-50"
+              className="focus-ring inline-flex min-h-12 items-center justify-center rounded-xl bg-primary px-5 text-center font-semibold leading-snug text-primary-foreground disabled:opacity-50"
             >
               {busy === "active"
                 ? localText(locale, "Saving…", "Зберігаємо…", "Zapisywanie…")
@@ -161,7 +161,7 @@ export function ProjectFreshnessConfirmation({
               type="button"
               disabled={Boolean(busy)}
               onClick={() => void confirm("close")}
-              className="focus-ring min-h-12 rounded-xl border border-border px-5 font-semibold hover:bg-muted disabled:opacity-50"
+              className="focus-ring inline-flex min-h-12 items-center justify-center rounded-xl border border-border px-5 text-center font-semibold leading-snug hover:bg-muted disabled:opacity-50"
             >
               {localText(locale, "Pause recruitment", "Призупинити набір", "Wstrzymaj rekrutację")}
             </button>
@@ -171,7 +171,7 @@ export function ProjectFreshnessConfirmation({
       {done ? (
         <Link
           href={withLocale(locale, `/projects/${projectId}`)}
-          className="focus-ring mt-6 inline-flex min-h-11 items-center rounded-xl bg-foreground px-5 font-semibold text-background"
+          className="focus-ring mt-6 inline-flex min-h-11 items-center justify-center rounded-xl bg-foreground px-5 text-center font-semibold leading-snug text-background"
         >
           {localText(locale, "Open project", "Відкрити проєкт", "Otwórz projekt")}
         </Link>

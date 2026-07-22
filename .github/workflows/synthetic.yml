@@ -31,10 +31,14 @@ jobs:
           path: synthetic-result.json
           retention-days: 30
       - name: Notify on-call webhook
-        if: failure() && secrets.ON_CALL_WEBHOOK_URL != ''
+        if: failure()
         env:
           ON_CALL_WEBHOOK_URL: ${{ secrets.ON_CALL_WEBHOOK_URL }}
         run: |
+          if [ -z "$ON_CALL_WEBHOOK_URL" ]; then
+            echo "ON_CALL_WEBHOOK_URL is not configured; skipping notification."
+            exit 0
+          fi
           curl --fail-with-body --retry 3 \
             -H "content-type: application/json" \
             --data '{"text":"WorkTogether production synthetic check failed. See the GitHub Actions run for correlation IDs and diagnostics."}' \

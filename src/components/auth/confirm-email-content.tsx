@@ -80,7 +80,7 @@ export function ConfirmEmailContent({
             type="button"
             onClick={() => void confirm()}
             disabled={state === "confirming"}
-            className="mt-5 h-10 rounded-xl bg-linear-to-r from-primary to-secondary px-5 text-sm font-semibold text-primary-foreground disabled:opacity-50"
+            className="mt-5 inline-flex min-h-10 items-center justify-center rounded-xl bg-linear-to-r from-primary to-secondary px-5 text-center text-sm font-semibold leading-snug text-primary-foreground disabled:opacity-50"
           >
             {state === "confirming" ? labels.confirming : labels.confirm}
           </button>
@@ -98,7 +98,7 @@ export function ConfirmEmailContent({
               type="button"
               onClick={() => void resend()}
               disabled={resending || cooldown > 0 || !email.trim()}
-              className="h-10 rounded-xl border border-border px-4 text-sm font-semibold disabled:opacity-50"
+              className="inline-flex min-h-10 items-center justify-center rounded-xl border border-border px-4 text-center text-sm font-semibold leading-snug disabled:opacity-50"
             >
               {resending
                 ? labels.resending
@@ -115,7 +115,7 @@ export function ConfirmEmailContent({
         ) : null}
         <Link
           href={withLocale(locale, "/auth/login")}
-          className="mt-6 inline-flex h-10 items-center justify-center rounded-xl bg-linear-to-r from-primary to-secondary px-4 text-sm font-semibold text-primary-foreground"
+          className="mt-6 inline-flex min-h-10 items-center justify-center rounded-xl bg-linear-to-r from-primary to-secondary px-4 text-center text-sm font-semibold leading-snug text-primary-foreground"
         >
           {labels.login}
         </Link>

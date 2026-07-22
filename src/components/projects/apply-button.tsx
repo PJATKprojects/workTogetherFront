@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useId, useRef, useState } from "react";
 
@@ -10,7 +11,8 @@ import { useApplicationMutations } from "@/hooks/use-application-mutations";
 import { useAuth } from "@/hooks/use-auth";
 import { localText, type Locale } from "@/i18n/locales";
 import { withLocale } from "@/i18n/paths";
-import { getApiError, getApiStatus } from "@/lib/api-error";
+import { getApiError, getApiStatus, getPlanLimitCode } from "@/lib/api-error";
+import { proCopy } from "@/i18n/pro-copy";
 import { readLocalDraft, removeLocalDraft, writeLocalDraft } from "@/lib/local-draft";
 import type { SiteMessages } from "@/messages/types";
 
@@ -69,6 +71,7 @@ export function ApplyButton({
   const [availability, setAvailability] = useState("");
   const [message, setMessage] = useState("");
   const [validationError, setValidationError] = useState("");
+  const [planLimited, setPlanLimited] = useState(false);
   const [clientRequestId, setClientRequestId] = useState(() => crypto.randomUUID());
   const [draftRestored, setDraftRestored] = useState(false);
   const hydratedDraftKey = useRef<string | null>(null);
@@ -161,6 +164,7 @@ export function ApplyButton({
 
     setValidationError("");
     setMessage("");
+    setPlanLimited(false);
     try {
       const trimmedNote = note.trim();
       await apply.mutateAsync({
@@ -194,7 +198,10 @@ export function ApplyButton({
       setOpen(false);
     } catch (error) {
       const status = getApiStatus(error);
-      if (status === 409) setMessage(labels.alreadyApplied);
+      if (status === 402) {
+        setPlanLimited(Boolean(getPlanLimitCode(error)));
+        setMessage(getApiError(error, proCopy(locale).weeklyLimit).message);
+      } else if (status === 409) setMessage(labels.alreadyApplied);
       else if (status === 422) setMessage(getApiError(error, errors.businessRule).message);
       else if (status === 429) setMessage(errors.tooManyRequests);
       else setMessage(getApiError(error, errors.generic).message);
@@ -342,9 +349,17 @@ export function ApplyButton({
         </p>
       ) : null}
       {message && !applied ? (
-        <p className="mt-2 text-xs text-destructive" role="alert">
-          {message}
-        </p>
+        <div className="mt-2 text-xs text-destructive" role="alert">
+          <p>{message}</p>
+          {planLimited ? (
+            <Link
+              href={withLocale(locale, "/pro")}
+              className="mt-1 inline-flex font-semibold underline underline-offset-2"
+            >
+              {proCopy(locale).upgrade}
+            </Link>
+          ) : null}
+        </div>
       ) : null}
       <div className="mt-3 flex flex-wrap gap-2">
         <Button type="submit" disabled={apply.isPending}>

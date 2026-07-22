@@ -2,10 +2,8 @@ import { expect, test } from "@playwright/test";
 
 import { gotoAfterAuthBootstrap, installApiMock } from "./fixtures";
 
-test.describe("exact onboarding contract", () => {
-  test("collects only the requested fields, previews imports, and shows three matches", async ({
-    page,
-  }) => {
+test.describe("progressive onboarding contract", () => {
+  test("requires one choice, saves optional details, and shows three matches", async ({ page }) => {
     test.setTimeout(60_000);
     const api = await installApiMock(page, { authenticated: true });
     await gotoAfterAuthBootstrap(page, "/en/onboarding");
@@ -17,15 +15,15 @@ test.describe("exact onboarding contract", () => {
     await page.getByLabel("Skills").fill("React");
     await page.getByRole("button", { name: "+ React" }).click();
     await page.getByLabel("React: Level").selectOption("intermediate");
-    await page.getByRole("button", { name: "Continue" }).click();
 
+    await page.locator("summary").filter({ hasText: "Availability" }).click();
     await page.getByLabel("Timezone").fill("Europe/Warsaw");
     await page.getByLabel("Hours per week").fill("8");
     await page.getByLabel("Start date").fill("2026-08-01");
     await page.getByText("Hybrid", { exact: true }).click();
     await page.getByText("English", { exact: true }).click();
-    await page.getByRole("button", { name: "Continue" }).click();
 
+    await page.locator("summary").filter({ hasText: "Your goal" }).click();
     await page.getByLabel("Goal").fill("Build a useful accessible product with a reliable team.");
 
     const githubSection = page.getByText("Import GitHub evidence (optional)");
@@ -52,13 +50,7 @@ test.describe("exact onboarding contract", () => {
     await expect(page.getByText("Extracted fields", { exact: true })).toBeVisible();
     expect(api.completedOnboarding).toEqual([]);
 
-    await page.getByRole("button", { name: "Continue" }).click();
-    await expect(page.getByRole("heading", { name: "Review before saving" })).toBeVisible();
-    await expect(page.getByText("Europe/Warsaw")).toBeVisible();
-    await expect(
-      page.getByText("Build a useful accessible product with a reliable team.")
-    ).toBeVisible();
-    await page.getByRole("button", { name: "Save and show matches" }).click();
+    await page.getByRole("button", { name: "Save and continue" }).click();
 
     await expect(
       page.getByRole("heading", { name: "Three relevant starting points" })
@@ -88,5 +80,25 @@ test.describe("exact onboarding contract", () => {
     expect(api.completedOnboarding[0]).not.toHaveProperty("riskPreference");
     expect(api.completedOnboarding[0]).not.toHaveProperty("workPace");
     expect(api.completedOnboarding[0]).not.toHaveProperty("communicationStyle");
+  });
+
+  test("can defer every profile detail without being trapped in setup", async ({ page }) => {
+    const api = await installApiMock(page, { authenticated: true });
+    await gotoAfterAuthBootstrap(page, "/en/onboarding");
+
+    await page.getByRole("button", { name: "Fill in later" }).click();
+
+    await expect(page).toHaveURL(/\/en\/profile$/);
+    expect(api.completedOnboarding).toHaveLength(1);
+    expect(api.completedOnboarding[0]).toMatchObject({
+      intent: "both",
+      skills: [],
+      languages: [],
+      goal: "",
+    });
+    expect(api.completedOnboarding[0]).not.toHaveProperty("primaryRoleId");
+    expect(api.completedOnboarding[0]).not.toHaveProperty("hoursPerWeek");
+    expect(api.completedOnboarding[0]).not.toHaveProperty("format");
+    expect(api.completedOnboarding[0]).not.toHaveProperty("startDate");
   });
 });

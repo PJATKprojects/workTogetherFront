@@ -21,6 +21,7 @@ import {
 import { getApiError, getApiStatus } from "@/lib/api-error";
 import { formatDate, formatDateTime } from "@/lib/format";
 import { projectHealthTone } from "@/lib/project-quality";
+import { proCopy } from "@/i18n/pro-copy";
 import { queryKeys } from "@/lib/query/keys";
 import type { SiteMessages } from "@/messages/types";
 
@@ -69,6 +70,7 @@ export function ProjectDetailView({
   const labels = messages.projects;
   const exact = projectCopy(locale);
   const local = detailCopy[locale];
+  const planText = proCopy(locale);
 
   useEffect(() => {
     if (!query.data) return;
@@ -170,6 +172,19 @@ export function ProjectDetailView({
             {project.isRecruitmentClosed ? (
               <Badge tone="neutral">{labels.recruitmentClosed}</Badge>
             ) : null}
+          </div>
+        ) : null}
+
+        {project.isOwner && project.planRestrictionCode === "free_active_project_limit" ? (
+          <div className="mt-5 rounded-xl border border-warning/40 bg-warning-soft p-4 text-sm leading-6 text-warning-soft-foreground">
+            <p className="font-semibold">{planText.limitedProjectTitle}</p>
+            <p className="mt-1">{planText.limitedProjectBody}</p>
+            <Link
+              href={withLocale(locale, "/pro")}
+              className="mt-2 inline-flex font-semibold underline underline-offset-2"
+            >
+              {planText.upgrade}
+            </Link>
           </div>
         ) : null}
 

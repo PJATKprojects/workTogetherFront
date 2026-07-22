@@ -83,7 +83,7 @@ export function ForgotPasswordForm({
           ) : null}
           <button
             disabled={busy}
-            className="h-11 w-full rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground transition hover:bg-primary-hover disabled:opacity-60"
+            className="inline-flex min-h-11 w-full items-center justify-center rounded-xl bg-primary px-4 text-center text-sm font-semibold leading-snug text-primary-foreground transition hover:bg-primary-hover disabled:opacity-60"
           >
             {busy ? labels.submitting : labels.submit}
           </button>

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -9,7 +10,8 @@ import { useProjectMutations } from "@/hooks/use-project-mutations";
 import { localText, type Locale } from "@/i18n/locales";
 import { withLocale } from "@/i18n/paths";
 import { projectCopy } from "@/i18n/project-copy";
-import { getApiError } from "@/lib/api-error";
+import { getApiError, getPlanLimitCode } from "@/lib/api-error";
+import { proCopy } from "@/i18n/pro-copy";
 import type { SiteMessages } from "@/messages/types";
 import type { ProjectDetail } from "@/types";
 
@@ -30,6 +32,7 @@ export function ProjectOwnerControls({
   const mutations = useProjectMutations(project.id);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [error, setError] = useState("");
+  const [planLimited, setPlanLimited] = useState(false);
   const pending =
     mutations.closeRecruitment.isPending ||
     mutations.reopenRecruitment.isPending ||
@@ -43,9 +46,11 @@ export function ProjectOwnerControls({
 
   const run = async (action: () => Promise<unknown>) => {
     setError("");
+    setPlanLimited(false);
     try {
       await action();
     } catch (reason) {
+      setPlanLimited(Boolean(getPlanLimitCode(reason)));
       setError(getApiError(reason, messages.projects.projectControlError).message);
     }
   };
@@ -107,15 +112,6 @@ export function ProjectOwnerControls({
         <Button
           type="button"
           size="sm"
-          variant="danger"
-          disabled={pending}
-          onClick={() => setConfirmDelete(true)}
-        >
-          {messages.projects.deleteProject}
-        </Button>
-        <Button
-          type="button"
-          size="sm"
           variant="secondary"
           disabled={pending}
           onClick={() =>
@@ -128,7 +124,28 @@ export function ProjectOwnerControls({
             ? localText(locale, "Restore", "Відновити з архіву", "Przywróć z archiwum")
             : localText(locale, "Archive", "Архівувати", "Archiwizuj")}
         </Button>
-        {error ? <p className="basis-full text-right text-xs text-destructive">{error}</p> : null}
+        <Button
+          type="button"
+          size="sm"
+          variant="danger"
+          disabled={pending}
+          onClick={() => setConfirmDelete(true)}
+        >
+          {messages.projects.deleteProject}
+        </Button>
+        {error ? (
+          <div className="basis-full text-right text-xs text-destructive">
+            <p>{error}</p>
+            {planLimited ? (
+              <Link
+                href={withLocale(locale, "/pro")}
+                className="mt-1 inline-flex font-semibold underline underline-offset-2"
+              >
+                {proCopy(locale).upgrade}
+              </Link>
+            ) : null}
+          </div>
+        ) : null}
       </div>
 
       <ConfirmDialog

@@ -132,7 +132,7 @@ export function NewChatDialog({
             <button
               key={item}
               type="button"
-              className={`focus-ring rounded-xl px-3 py-2 text-sm font-semibold transition ${
+              className={`focus-ring inline-flex min-h-10 items-center justify-center rounded-xl px-3 py-2 text-center text-sm font-semibold leading-snug transition ${
                 mode === item ? "bg-surface text-foreground shadow-sm" : "text-muted-foreground"
               }`}
               onClick={() => {

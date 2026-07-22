@@ -130,7 +130,7 @@ export function AccountLifecycle({ locale }: Readonly<{ locale: Locale }>) {
         <button
           disabled={busy.length > 0}
           onClick={() => void exportData()}
-          className="mt-4 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground disabled:opacity-50"
+          className="mt-4 inline-flex min-h-11 items-center justify-center rounded-xl bg-primary px-4 py-2.5 text-center text-sm font-semibold leading-snug text-primary-foreground disabled:opacity-50"
         >
           {busy === "export"
             ? "…"
@@ -189,7 +189,7 @@ export function AccountLifecycle({ locale }: Readonly<{ locale: Locale }>) {
             <button
               disabled={busy.length > 0}
               onClick={() => void cancel()}
-              className="mt-3 rounded-xl border border-border bg-surface px-4 py-2 font-semibold"
+              className="mt-3 inline-flex min-h-10 items-center justify-center rounded-xl border border-border bg-surface px-4 py-2 text-center font-semibold leading-snug"
             >
               {localText(locale, "Cancel deletion", "Скасувати видалення", "Anuluj usunięcie")}
             </button>
@@ -198,7 +198,7 @@ export function AccountLifecycle({ locale }: Readonly<{ locale: Locale }>) {
           <button
             disabled={busy.length > 0}
             onClick={() => void requestDeletion()}
-            className="mt-4 rounded-xl bg-destructive px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-50"
+            className="mt-4 inline-flex min-h-11 items-center justify-center rounded-xl bg-destructive px-4 py-2.5 text-center text-sm font-semibold leading-snug text-white disabled:opacity-50"
           >
             {busy === "delete"
               ? "…"

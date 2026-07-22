@@ -1,5 +1,6 @@
 import type { SiteMessages } from "./types";
 import { enPolicyMessages } from "./policies/en";
+import { paidPrivacy, paidTerms } from "./paid-service-legal";
 
 /** Default site locale — canonical copy. */
 export const en: SiteMessages = {
@@ -102,6 +103,7 @@ export const en: SiteMessages = {
     rights: "All rights reserved.",
     projects: "Projects",
     howItWorks: "How it works",
+    install: "Add to device",
     login: "Log in",
     signUp: "Sign up",
     profile: "Profile",
@@ -761,7 +763,7 @@ export const en: SiteMessages = {
     metaDescription:
       "The rules for using WorkTogether: accounts, projects, applications, acceptable use, and liability.",
     title: "Terms of Service",
-    updated: "July 18, 2026",
+    updated: "July 22, 2026",
     intro:
       "These Terms of Service (the “Terms”) govern your use of WorkTogether — a platform where students publish projects, open team positions, and apply to join other people's projects. By creating an account or using the site you agree to these Terms. If you do not agree, do not use the service.",
     sections: [
@@ -769,7 +771,7 @@ export const en: SiteMessages = {
         heading: "1. About the service",
         body: [
           "The legal person identified in the provider box above supplies the electronic service and is referred to as “WorkTogether”, “we” or “us”. The platform lets adults create profiles, publish projects and roles, apply, message and collaborate.",
-          "The pilot is free and under active development. WorkTogether is not an employer, recruitment agency, payment provider or party to agreements between project participants.",
+          "The service has a free plan and optional prepaid Pro access and is under active development. WorkTogether is not an employer, recruitment agency, payment provider or party to agreements between project participants.",
         ],
       },
       {
@@ -869,6 +871,7 @@ export const en: SiteMessages = {
           "Complaints and questions can be sent to support@worktogether.app. Include your account email where relevant, the affected URL or feature, a description and the requested outcome. We aim to acknowledge and answer a complete complaint within 14 days; a statutory deadline prevails if different.",
         ],
       },
+      paidTerms.en,
     ],
   },
   privacy: {
@@ -876,7 +879,7 @@ export const en: SiteMessages = {
     metaDescription:
       "What data WorkTogether collects, why, how long it is kept, what other users can see, and your rights.",
     title: "Privacy Policy",
-    updated: "July 18, 2026",
+    updated: "July 22, 2026",
     intro:
       "The operator identified above is the controller of personal data processed through the WorkTogether website and API. We collect data needed for an adult collaboration platform, do not sell personal data and do not use it for behavioural advertising.",
     sections: [
@@ -978,6 +981,7 @@ export const en: SiteMessages = {
         heading: "11. Contact",
         body: ["Privacy questions and data requests: support@worktogether.app."],
       },
+      paidPrivacy.en,
     ],
   },
   ...enPolicyMessages,

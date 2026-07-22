@@ -2,6 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
 import { useAuth } from "@/hooks/use-auth";
@@ -30,6 +31,7 @@ const languageOptions = ["en", "uk", "pl", "de", "es", "fr"] as const;
 export function ProductOnboardingWizard({ locale }: Readonly<{ locale: Locale }>) {
   const text = copy(locale);
   const { refreshSession } = useAuth();
+  const router = useRouter();
   const roles = useQuery({ queryKey: ["roles"], queryFn: lookupService.getRoles });
   const technologies = useQuery({
     queryKey: ["technologies"],
@@ -44,8 +46,8 @@ export function ProductOnboardingWizard({ locale }: Readonly<{ locale: Locale }>
   const [timeZone, setTimeZone] = useState("UTC");
   const [utcOffsetMinutes, setUtcOffsetMinutes] = useState(0);
   const [languages, setLanguages] = useState<string[]>([]);
-  const [hoursPerWeek, setHoursPerWeek] = useState(10);
-  const [format, setFormat] = useState<WorkFormat>("remote");
+  const [hoursPerWeek, setHoursPerWeek] = useState<number | "">("");
+  const [format, setFormat] = useState<WorkFormat | "">("");
   const [goal, setGoal] = useState("");
   const [startDate, setStartDate] = useState("");
   const [githubUsername, setGithubUsername] = useState("");
@@ -100,16 +102,6 @@ export function ProductOnboardingWizard({ locale }: Readonly<{ locale: Locale }>
 
   const validateStep = () => {
     if (step === 0 && !intent) return text.intentRequired;
-    if (step === 1 && (!primaryRoleId || skills.length === 0)) {
-      return text.roleSkillsRequired;
-    }
-    if (
-      step === 2 &&
-      (!timeZone.trim() || languages.length === 0 || hoursPerWeek < 1 || !startDate)
-    ) {
-      return text.availabilityRequired;
-    }
-    if (step === 3 && !goal.trim()) return text.goalRequired;
     return "";
   };
 
@@ -120,7 +112,7 @@ export function ProductOnboardingWizard({ locale }: Readonly<{ locale: Locale }>
       return;
     }
     setError("");
-    setStep((current) => Math.min(4, current + 1));
+    setStep((current) => Math.min(1, current + 1));
   };
 
   const addSkill = (technologyId: number) => {
@@ -170,24 +162,29 @@ export function ProductOnboardingWizard({ locale }: Readonly<{ locale: Locale }>
     setDocumentText("");
   };
 
-  const submit = () =>
+  const submit = (selectedIntent: OnboardingIntent, includeOptionalDetails: boolean) =>
     run("submit", async () => {
-      if (!intent || !primaryRoleId) return;
+      setIntent(selectedIntent);
       await onboardingService.complete({
-        intent,
-        primaryRoleId,
-        skills,
+        intent: selectedIntent,
+        primaryRoleId: includeOptionalDetails && primaryRoleId ? primaryRoleId : undefined,
+        skills: includeOptionalDetails ? skills : [],
         timeZone: timeZone.trim(),
         utcOffsetMinutes,
-        languages,
-        hoursPerWeek,
-        format,
-        goal: goal.trim(),
-        startDate,
-        reviewedGithubImport: includeGithub && githubPreview ? githubPreview : undefined,
+        languages: includeOptionalDetails ? languages : [],
+        hoursPerWeek: includeOptionalDetails && hoursPerWeek !== "" ? hoursPerWeek : undefined,
+        format: includeOptionalDetails && format ? format : undefined,
+        goal: includeOptionalDetails ? goal.trim() : "",
+        startDate: includeOptionalDetails && startDate ? startDate : undefined,
+        reviewedGithubImport:
+          includeOptionalDetails && includeGithub && githubPreview ? githubPreview : undefined,
       });
       await refreshSession();
-      setMatches(await loadThreeMatches(intent));
+      if (!includeOptionalDetails) {
+        router.replace(withLocale(locale, "/profile"));
+        return;
+      }
+      setMatches(await loadThreeMatches(selectedIntent).catch(() => []));
     });
 
   const loadThreeMatches = async (selectedIntent: OnboardingIntent): Promise<MatchCard[]> => {
@@ -277,12 +274,18 @@ export function ProductOnboardingWizard({ locale }: Readonly<{ locale: Locale }>
               {text.createProject}
             </Link>
           )}
+          <Link
+            href={withLocale(locale, "/profile/edit")}
+            className="rounded-xl border border-border px-5 py-3 text-sm font-semibold"
+          >
+            {text.profileLater}
+          </Link>
         </div>
       </div>
     );
   }
 
-  const progress = ((step + 1) / 5) * 100;
+  const progress = ((step + 1) / 2) * 100;
   return (
     <div className="rounded-3xl border border-border bg-surface p-5 shadow-sm sm:p-8">
       <div className="flex items-center justify-between gap-3">
@@ -292,13 +295,13 @@ export function ProductOnboardingWizard({ locale }: Readonly<{ locale: Locale }>
           </p>
           <h1 className="mt-1 text-3xl font-semibold tracking-tight">{text.title}</h1>
         </div>
-        <span className="text-sm font-semibold text-muted-foreground">{step + 1}/5</span>
+        <span className="text-sm font-semibold text-muted-foreground">{step + 1}/2</span>
       </div>
       <div
         className="mt-5 h-2 overflow-hidden rounded-full bg-muted"
         role="progressbar"
         aria-valuemin={1}
-        aria-valuemax={5}
+        aria-valuemax={2}
         aria-valuenow={step + 1}
       >
         <div
@@ -317,17 +320,29 @@ export function ProductOnboardingWizard({ locale }: Readonly<{ locale: Locale }>
       ) : null}
 
       <div className="mt-7 min-h-[22rem]">
-        {step === 0 ? <IntentStep locale={locale} value={intent} onChange={setIntent} /> : null}
+        {step === 0 ? (
+          <IntentStep
+            locale={locale}
+            value={intent}
+            onChange={(value) => {
+              setIntent(value);
+              setError("");
+            }}
+          />
+        ) : null}
         {step === 1 ? (
           <section>
-            <h2 className="text-xl font-semibold">{text.roleSkills}</h2>
+            <h2 className="text-xl font-semibold">
+              {text.roleSkills}{" "}
+              <span className="text-sm font-normal text-muted-foreground">({text.optional})</span>
+            </h2>
             <p className="mt-1 text-sm text-muted-foreground">{text.roleSkillsHint}</p>
             <label className="mt-5 block text-sm font-semibold">
               {text.primaryRole}
               <select
                 value={primaryRoleId || ""}
                 onChange={(event) => setPrimaryRoleId(Number(event.target.value))}
-                className="mt-2 h-11 w-full rounded-xl border border-input bg-surface px-3"
+                className="focus-ring mt-2 h-11 w-full rounded-xl border border-input bg-surface px-3"
               >
                 <option value="">{text.chooseRole}</option>
                 {roles.data?.map((role) => (
@@ -343,7 +358,7 @@ export function ProductOnboardingWizard({ locale }: Readonly<{ locale: Locale }>
                 value={skillSearch}
                 onChange={(event) => setSkillSearch(event.target.value)}
                 placeholder={text.skillSearch}
-                className="mt-2 h-11 w-full rounded-xl border border-input bg-surface px-3"
+                className="focus-ring mt-2 h-11 w-full rounded-xl border border-input bg-surface px-3"
               />
             </label>
             {filteredTechnologies.length > 0 ? (
@@ -353,7 +368,7 @@ export function ProductOnboardingWizard({ locale }: Readonly<{ locale: Locale }>
                     type="button"
                     key={technology.id}
                     onClick={() => addSkill(technology.id)}
-                    className="rounded-full border border-border px-3 py-1.5 text-xs font-semibold hover:border-primary/40"
+                    className="focus-ring rounded-full border border-border px-3 py-1.5 text-xs font-semibold hover:border-primary/40"
                   >
                     + {technology.name}
                   </button>
@@ -379,7 +394,7 @@ export function ProductOnboardingWizard({ locale }: Readonly<{ locale: Locale }>
                       onChange={(event) =>
                         updateSkillLevel(skill.technologyId, event.target.value as SkillLevel)
                       }
-                      className="h-9 rounded-lg border border-input bg-surface px-2 text-xs"
+                      className="focus-ring h-9 rounded-lg border border-input bg-surface px-2 text-xs"
                     >
                       <option value="beginner">{text.beginner}</option>
                       <option value="intermediate">{text.intermediate}</option>
@@ -393,7 +408,7 @@ export function ProductOnboardingWizard({ locale }: Readonly<{ locale: Locale }>
                           current.filter((item) => item.technologyId !== skill.technologyId)
                         )
                       }
-                      className="rounded-lg p-2 text-destructive hover:bg-destructive/10"
+                      className="focus-ring rounded-lg p-2 text-destructive hover:bg-destructive/10"
                     >
                       ×
                     </button>
@@ -403,214 +418,225 @@ export function ProductOnboardingWizard({ locale }: Readonly<{ locale: Locale }>
             </div>
           </section>
         ) : null}
-        {step === 2 ? (
-          <AvailabilityStep
-            locale={locale}
-            timeZone={timeZone}
-            setTimeZone={setTimeZone}
-            languages={languages}
-            setLanguages={setLanguages}
-            hoursPerWeek={hoursPerWeek}
-            setHoursPerWeek={setHoursPerWeek}
-            format={format}
-            setFormat={setFormat}
-            startDate={startDate}
-            setStartDate={setStartDate}
-          />
+        {step === 1 ? (
+          <details className="mt-5 rounded-2xl border border-border p-4">
+            <summary className="focus-ring -m-1 cursor-pointer rounded-lg p-1 font-semibold">
+              {text.availability}{" "}
+              <span className="font-normal text-muted-foreground">({text.optional})</span>
+            </summary>
+            <AvailabilityStep
+              locale={locale}
+              timeZone={timeZone}
+              setTimeZone={setTimeZone}
+              languages={languages}
+              setLanguages={setLanguages}
+              hoursPerWeek={hoursPerWeek}
+              setHoursPerWeek={setHoursPerWeek}
+              format={format}
+              setFormat={setFormat}
+              startDate={startDate}
+              setStartDate={setStartDate}
+            />
+          </details>
         ) : null}
-        {step === 3 ? (
-          <section>
-            <h2 className="text-xl font-semibold">{text.goalImports}</h2>
-            <p className="mt-1 text-sm text-muted-foreground">{text.importsOptional}</p>
-            <label className="mt-5 block text-sm font-semibold">
-              {text.goal}
-              <textarea
-                value={goal}
-                maxLength={200}
-                onChange={(event) => setGoal(event.target.value)}
-                placeholder={text.goalPlaceholder}
-                className="mt-2 min-h-24 w-full rounded-xl border border-input bg-surface p-3 text-sm"
-              />
-            </label>
-
-            <details className="mt-5 rounded-xl border border-border p-4">
-              <summary className="cursor-pointer font-semibold">{text.githubImport}</summary>
-              <p className="mt-2 text-xs leading-5 text-muted-foreground">
-                {text.githubConsentHint}
-              </p>
-              <input
-                value={githubUsername}
-                onChange={(event) => {
-                  setGithubUsername(event.target.value);
-                  setGithubPreview(null);
-                }}
-                placeholder="github-username"
-                className="mt-3 h-10 w-full rounded-lg border border-input bg-surface px-3 text-sm"
-              />
-              <label className="mt-3 flex items-start gap-2 text-xs">
-                <input
-                  type="checkbox"
-                  checked={githubConsent}
-                  onChange={(event) => setGithubConsent(event.target.checked)}
-                  className="mt-0.5 size-4 accent-primary"
+        {step === 1 ? (
+          <details className="mt-3 rounded-2xl border border-border p-4">
+            <summary className="focus-ring -m-1 cursor-pointer rounded-lg p-1 font-semibold">
+              {text.goalImports}{" "}
+              <span className="font-normal text-muted-foreground">({text.optional})</span>
+            </summary>
+            <section className="pt-3">
+              <p className="mt-1 text-sm text-muted-foreground">{text.importsOptional}</p>
+              <label className="mt-5 block text-sm font-semibold">
+                {text.goal}
+                <textarea
+                  value={goal}
+                  maxLength={200}
+                  onChange={(event) => setGoal(event.target.value)}
+                  placeholder={text.goalPlaceholder}
+                  className="mt-2 min-h-24 w-full rounded-xl border border-input bg-surface p-3 text-sm"
                 />
-                {text.githubConsent}
               </label>
-              <button
-                type="button"
-                onClick={() => void previewGithubImport()}
-                disabled={Boolean(busy) || !githubConsent || !githubUsername.trim()}
-                className="mt-3 rounded-lg border border-border px-3 py-2 text-xs font-semibold disabled:opacity-50"
-              >
-                {text.previewImport}
-              </button>
-              {githubPreview ? (
-                <div className="mt-3 rounded-lg bg-surface-muted p-3 text-xs">
-                  <p className="font-semibold">@{githubPreview.username}</p>
-                  <p className="mt-1 text-muted-foreground">
-                    {text.contributions.replace("{count}", String(githubPreview.contributionCount))}
-                  </p>
-                  <p className="mt-1 text-muted-foreground">
-                    {githubPreview.languages.join(", ") || text.none}
-                  </p>
-                  <ul className="mt-2 space-y-1">
-                    {githubPreview.pinnedRepositories.map((repository) => (
-                      <li key={repository.url}>{repository.name}</li>
-                    ))}
-                  </ul>
-                  <label className="mt-3 flex items-center gap-2 font-semibold">
-                    <input
-                      type="checkbox"
-                      checked={includeGithub}
-                      onChange={(event) => setIncludeGithub(event.target.checked)}
-                      className="size-4 accent-primary"
-                    />
-                    {text.saveReviewedGithub}
-                  </label>
-                </div>
-              ) : null}
-            </details>
 
-            <details className="mt-3 rounded-xl border border-border p-4">
-              <summary className="cursor-pointer font-semibold">{text.documentImport}</summary>
-              <p className="mt-2 text-xs leading-5 text-muted-foreground">{text.documentHint}</p>
-              <select
-                value={documentSource}
-                onChange={(event) => setDocumentSource(event.target.value as "cv" | "linkedin")}
-                className="mt-3 h-10 rounded-lg border border-input bg-surface px-3 text-sm"
-              >
-                <option value="cv">CV</option>
-                <option value="linkedin">LinkedIn</option>
-              </select>
-              <textarea
-                value={documentText}
-                maxLength={50_000}
-                onChange={(event) => {
-                  setDocumentText(event.target.value);
-                  setDocumentPreview(null);
-                }}
-                placeholder={text.pasteText}
-                className="mt-3 min-h-28 w-full rounded-lg border border-input bg-surface p-3 text-sm"
-              />
-              <label className="mt-3 flex items-start gap-2 text-xs">
+              <details className="mt-5 rounded-xl border border-border p-4">
+                <summary className="focus-ring -m-1 cursor-pointer rounded-lg p-1 font-semibold">
+                  {text.githubImport}
+                </summary>
+                <p className="mt-2 text-xs leading-5 text-muted-foreground">
+                  {text.githubConsentHint}
+                </p>
                 <input
-                  type="checkbox"
-                  checked={documentConsent}
-                  onChange={(event) => setDocumentConsent(event.target.checked)}
-                  className="mt-0.5 size-4 accent-primary"
+                  value={githubUsername}
+                  onChange={(event) => {
+                    setGithubUsername(event.target.value);
+                    setGithubPreview(null);
+                  }}
+                  placeholder="github-username"
+                  className="mt-3 h-10 w-full rounded-lg border border-input bg-surface px-3 text-sm"
                 />
-                {text.documentConsent}
-              </label>
-              <button
-                type="button"
-                disabled={Boolean(busy) || !documentConsent || !documentText.trim()}
-                onClick={() => void previewDocumentImport()}
-                className="mt-3 rounded-lg border border-border px-3 py-2 text-xs font-semibold disabled:opacity-50"
-              >
-                {text.previewImport}
-              </button>
-              {documentPreview ? (
-                <div className="mt-3 rounded-lg bg-surface-muted p-3 text-xs">
-                  <p className="font-semibold">{text.extractedPreview}</p>
-                  <p className="mt-1">
-                    {text.role}:{" "}
-                    {roles.data?.find((role) => role.id === documentPreview.suggestedRoleId)
-                      ? localizeRole(
-                          roles.data.find((role) => role.id === documentPreview.suggestedRoleId)!,
-                          locale
-                        )
-                      : text.none}
-                  </p>
-                  <p className="mt-1">
-                    {text.skills}: {documentPreview.suggestedSkills.length}
-                  </p>
-                  <p className="mt-1">
-                    {text.languages}: {documentPreview.suggestedLanguages.join(", ") || text.none}
-                  </p>
-                  <button
-                    type="button"
-                    onClick={applyDocumentPreview}
-                    className="mt-3 rounded-lg bg-primary px-3 py-2 font-semibold text-primary-foreground"
-                  >
-                    {text.applySuggestions}
-                  </button>
-                </div>
-              ) : null}
-            </details>
-          </section>
-        ) : null}
-        {step === 4 ? (
-          <ReviewStep
-            locale={locale}
-            intent={intent as OnboardingIntent}
-            roleName={
-              roles.data?.find((role) => role.id === primaryRoleId)
-                ? localizeRole(roles.data.find((role) => role.id === primaryRoleId)!, locale)
-                : ""
-            }
-            skillNames={skills.map(
-              (skill) =>
-                technologies.data?.find((technology) => technology.id === skill.technologyId)
-                  ?.name ?? `#${skill.technologyId}`
-            )}
-            timeZone={timeZone}
-            languages={languages}
-            hoursPerWeek={hoursPerWeek}
-            format={format}
-            startDate={startDate}
-            goal={goal}
-            github={includeGithub ? githubPreview?.username : undefined}
-          />
+                <label className="mt-3 flex items-start gap-2 text-xs">
+                  <input
+                    type="checkbox"
+                    checked={githubConsent}
+                    onChange={(event) => setGithubConsent(event.target.checked)}
+                    className="mt-0.5 size-4 accent-primary"
+                  />
+                  {text.githubConsent}
+                </label>
+                <button
+                  type="button"
+                  onClick={() => void previewGithubImport()}
+                  disabled={Boolean(busy) || !githubConsent || !githubUsername.trim()}
+                  className="mt-3 rounded-lg border border-border px-3 py-2 text-xs font-semibold disabled:opacity-50"
+                >
+                  {text.previewImport}
+                </button>
+                {githubPreview ? (
+                  <div className="mt-3 rounded-lg bg-surface-muted p-3 text-xs">
+                    <p className="font-semibold">@{githubPreview.username}</p>
+                    <p className="mt-1 text-muted-foreground">
+                      {text.contributions.replace(
+                        "{count}",
+                        String(githubPreview.contributionCount)
+                      )}
+                    </p>
+                    <p className="mt-1 text-muted-foreground">
+                      {githubPreview.languages.join(", ") || text.none}
+                    </p>
+                    <ul className="mt-2 space-y-1">
+                      {githubPreview.pinnedRepositories.map((repository) => (
+                        <li key={repository.url}>{repository.name}</li>
+                      ))}
+                    </ul>
+                    <label className="mt-3 flex items-center gap-2 font-semibold">
+                      <input
+                        type="checkbox"
+                        checked={includeGithub}
+                        onChange={(event) => setIncludeGithub(event.target.checked)}
+                        className="size-4 accent-primary"
+                      />
+                      {text.saveReviewedGithub}
+                    </label>
+                  </div>
+                ) : null}
+              </details>
+
+              <details className="mt-3 rounded-xl border border-border p-4">
+                <summary className="focus-ring -m-1 cursor-pointer rounded-lg p-1 font-semibold">
+                  {text.documentImport}
+                </summary>
+                <p className="mt-2 text-xs leading-5 text-muted-foreground">{text.documentHint}</p>
+                <select
+                  value={documentSource}
+                  onChange={(event) => setDocumentSource(event.target.value as "cv" | "linkedin")}
+                  className="mt-3 h-10 rounded-lg border border-input bg-surface px-3 text-sm"
+                >
+                  <option value="cv">CV</option>
+                  <option value="linkedin">LinkedIn</option>
+                </select>
+                <textarea
+                  value={documentText}
+                  maxLength={50_000}
+                  onChange={(event) => {
+                    setDocumentText(event.target.value);
+                    setDocumentPreview(null);
+                  }}
+                  placeholder={text.pasteText}
+                  className="mt-3 min-h-28 w-full rounded-lg border border-input bg-surface p-3 text-sm"
+                />
+                <label className="mt-3 flex items-start gap-2 text-xs">
+                  <input
+                    type="checkbox"
+                    checked={documentConsent}
+                    onChange={(event) => setDocumentConsent(event.target.checked)}
+                    className="mt-0.5 size-4 accent-primary"
+                  />
+                  {text.documentConsent}
+                </label>
+                <button
+                  type="button"
+                  disabled={Boolean(busy) || !documentConsent || !documentText.trim()}
+                  onClick={() => void previewDocumentImport()}
+                  className="mt-3 rounded-lg border border-border px-3 py-2 text-xs font-semibold disabled:opacity-50"
+                >
+                  {text.previewImport}
+                </button>
+                {documentPreview ? (
+                  <div className="mt-3 rounded-lg bg-surface-muted p-3 text-xs">
+                    <p className="font-semibold">{text.extractedPreview}</p>
+                    <p className="mt-1">
+                      {text.role}:{" "}
+                      {roles.data?.find((role) => role.id === documentPreview.suggestedRoleId)
+                        ? localizeRole(
+                            roles.data.find((role) => role.id === documentPreview.suggestedRoleId)!,
+                            locale
+                          )
+                        : text.none}
+                    </p>
+                    <p className="mt-1">
+                      {text.skills}: {documentPreview.suggestedSkills.length}
+                    </p>
+                    <p className="mt-1">
+                      {text.languages}: {documentPreview.suggestedLanguages.join(", ") || text.none}
+                    </p>
+                    <button
+                      type="button"
+                      onClick={applyDocumentPreview}
+                      className="mt-3 rounded-lg bg-primary px-3 py-2 font-semibold text-primary-foreground"
+                    >
+                      {text.applySuggestions}
+                    </button>
+                  </div>
+                ) : null}
+              </details>
+            </section>
+          </details>
         ) : null}
       </div>
 
       <div className="mt-7 flex items-center justify-between gap-3 border-t border-border pt-5">
-        <button
-          type="button"
-          onClick={() => setStep((current) => Math.max(0, current - 1))}
-          disabled={step === 0 || Boolean(busy)}
-          className="rounded-xl border border-border px-4 py-2.5 text-sm font-semibold disabled:opacity-40"
-        >
-          {text.back}
-        </button>
-        {step < 4 ? (
+        {step > 0 ? (
           <button
             type="button"
-            onClick={next}
-            className="rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground"
+            onClick={() => setStep((current) => Math.max(0, current - 1))}
+            disabled={Boolean(busy)}
+            className="focus-ring rounded-xl border border-border px-4 py-2.5 text-sm font-semibold disabled:opacity-40"
           >
-            {text.next}
+            {text.back}
           </button>
         ) : (
-          <button
-            type="button"
-            onClick={() => void submit()}
-            disabled={Boolean(busy)}
-            className="rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground disabled:opacity-50"
-          >
-            {busy === "submit" ? text.saving : text.finish}
-          </button>
+          <span aria-hidden />
         )}
+        <div className="flex flex-wrap items-center justify-end gap-2">
+          {step === 0 ? (
+            <button
+              type="button"
+              onClick={() => void submit(intent || "both", false)}
+              disabled={Boolean(busy)}
+              className="focus-ring rounded-xl px-4 py-2.5 text-sm font-semibold text-muted-foreground transition hover:bg-muted hover:text-foreground disabled:opacity-50"
+            >
+              {busy === "submit" ? text.saving : text.finishLater}
+            </button>
+          ) : null}
+          {step < 1 ? (
+            <button
+              type="button"
+              onClick={next}
+              className="focus-ring rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground transition hover:bg-primary-hover"
+            >
+              {text.next}
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => void submit(intent || "both", true)}
+              disabled={Boolean(busy)}
+              className="focus-ring rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground transition hover:bg-primary-hover disabled:opacity-50"
+            >
+              {busy === "submit" ? text.saving : text.finish}
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -647,7 +673,7 @@ function IntentStep({
         {options.map((option) => (
           <label
             key={option.value}
-            className={`cursor-pointer rounded-2xl border p-4 transition ${
+            className={`cursor-pointer rounded-2xl border p-4 transition focus-within:ring-2 focus-within:ring-primary focus-within:ring-offset-2 focus-within:ring-offset-background ${
               value === option.value
                 ? "border-primary bg-primary/8"
                 : "border-border hover:border-primary/35"
@@ -690,10 +716,10 @@ function AvailabilityStep({
   setTimeZone: (value: string) => void;
   languages: string[];
   setLanguages: (value: string[]) => void;
-  hoursPerWeek: number;
-  setHoursPerWeek: (value: number) => void;
-  format: WorkFormat;
-  setFormat: (value: WorkFormat) => void;
+  hoursPerWeek: number | "";
+  setHoursPerWeek: (value: number | "") => void;
+  format: WorkFormat | "";
+  setFormat: (value: WorkFormat | "") => void;
   startDate: string;
   setStartDate: (value: string) => void;
 }>) {
@@ -703,9 +729,8 @@ function AvailabilityStep({
       ? Intl.supportedValuesOf("timeZone")
       : ["UTC", "Europe/Warsaw", "Europe/Kyiv", "Europe/London"];
   return (
-    <section>
-      <h2 className="text-xl font-semibold">{text.availability}</h2>
-      <p className="mt-1 text-sm text-muted-foreground">{text.availabilityHint}</p>
+    <section className="pt-3">
+      <p className="text-sm text-muted-foreground">{text.availabilityHint}</p>
       <div className="mt-5 grid gap-4 sm:grid-cols-2">
         <label className="text-sm font-semibold">
           {text.timeZone}
@@ -728,7 +753,9 @@ function AvailabilityStep({
             min={1}
             max={80}
             value={hoursPerWeek}
-            onChange={(event) => setHoursPerWeek(Number(event.target.value))}
+            onChange={(event) =>
+              setHoursPerWeek(event.target.value ? Number(event.target.value) : "")
+            }
             className="mt-2 h-11 w-full rounded-xl border border-input bg-surface px-3"
           />
         </label>
@@ -748,7 +775,7 @@ function AvailabilityStep({
             {(["remote", "local", "hybrid"] as const).map((value) => (
               <label
                 key={value}
-                className={`cursor-pointer rounded-full border px-3 py-2 text-xs font-semibold ${
+                className={`cursor-pointer rounded-full border px-3 py-2 text-xs font-semibold focus-within:ring-2 focus-within:ring-primary focus-within:ring-offset-2 focus-within:ring-offset-background ${
                   format === value
                     ? "border-primary bg-primary/8 text-primary-text"
                     : "border-border"
@@ -776,7 +803,7 @@ function AvailabilityStep({
             return (
               <label
                 key={language}
-                className={`cursor-pointer rounded-full border px-3 py-2 text-xs font-semibold ${
+                className={`cursor-pointer rounded-full border px-3 py-2 text-xs font-semibold focus-within:ring-2 focus-within:ring-primary focus-within:ring-offset-2 focus-within:ring-offset-background ${
                   selected ? "border-primary bg-primary/8 text-primary-text" : "border-border"
                 }`}
               >
@@ -798,60 +825,6 @@ function AvailabilityStep({
           })}
         </div>
       </fieldset>
-    </section>
-  );
-}
-
-function ReviewStep({
-  locale,
-  intent,
-  roleName,
-  skillNames,
-  timeZone,
-  languages,
-  hoursPerWeek,
-  format,
-  startDate,
-  goal,
-  github,
-}: Readonly<{
-  locale: Locale;
-  intent: OnboardingIntent;
-  roleName: string;
-  skillNames: string[];
-  timeZone: string;
-  languages: string[];
-  hoursPerWeek: number;
-  format: WorkFormat;
-  startDate: string;
-  goal: string;
-  github?: string;
-}>) {
-  const text = copy(locale);
-  const rows = [
-    [text.intent, text[intent]],
-    [text.role, roleName],
-    [text.skills, skillNames.join(", ")],
-    [text.timeZone, timeZone],
-    [text.languages, languages.map((code) => languageLabel(code, locale)).join(", ")],
-    [text.hours, String(hoursPerWeek)],
-    [text.format, text[format]],
-    [text.startDate, startDate],
-    [text.goal, goal],
-    ...(github ? [["GitHub", `@${github}`]] : []),
-  ];
-  return (
-    <section>
-      <h2 className="text-xl font-semibold">{text.review}</h2>
-      <p className="mt-1 text-sm text-muted-foreground">{text.reviewHint}</p>
-      <dl className="mt-5 divide-y divide-border rounded-2xl border border-border px-4">
-        {rows.map(([label, value]) => (
-          <div key={label} className="grid gap-1 py-3 sm:grid-cols-[9rem_1fr]">
-            <dt className="text-xs font-semibold text-muted-foreground">{label}</dt>
-            <dd className="text-sm">{value}</dd>
-          </div>
-        ))}
-      </dl>
     </section>
   );
 }
@@ -878,8 +851,9 @@ function copy(locale: Locale) {
 }
 
 const onboardingEnglish = {
-  time: "3–5 minute setup",
+  time: "One choice now, details later",
   title: "Let’s find your best next step",
+  optional: "optional",
   intentTitle: "What do you want to do?",
   intentHint: "This controls what we show immediately after setup.",
   join: "Join a project",
@@ -889,7 +863,7 @@ const onboardingEnglish = {
   both: "Both",
   bothHint: "Explore projects and complementary people.",
   roleSkills: "Your role and skills",
-  roleSkillsHint: "Choose one primary role and add skills with honest levels.",
+  roleSkillsHint: "Add these now for better matches, or leave them for your profile later.",
   primaryRole: "Primary role",
   chooseRole: "Choose a role",
   skills: "Skills",
@@ -900,7 +874,7 @@ const onboardingEnglish = {
   advanced: "Advanced",
   removeSkill: "Remove skill",
   availability: "Availability",
-  availabilityHint: "Only the fields needed to find realistic overlap.",
+  availabilityHint: "All of these fields can be added or changed later in your profile.",
   timeZone: "Timezone",
   hours: "Hours per week",
   startDate: "Start date",
@@ -910,7 +884,7 @@ const onboardingEnglish = {
   hybrid: "Hybrid",
   languages: "Working languages",
   goalImports: "Your goal and optional imports",
-  importsOptional: "Imports are optional and nothing is saved before you review it.",
+  importsOptional: "Nothing is saved before you review it, and this whole section can wait.",
   goal: "Goal",
   goalPlaceholder: "What would you like to achieve through this collaboration?",
   githubImport: "Import GitHub evidence (optional)",
@@ -932,7 +906,9 @@ const onboardingEnglish = {
   role: "Role",
   back: "Back",
   next: "Continue",
-  finish: "Save and show matches",
+  finish: "Save and continue",
+  finishLater: "Fill in later",
+  profileLater: "Complete profile details",
   saving: "Saving…",
   intentRequired: "Choose what you want to do.",
   roleSkillsRequired: "Choose a role and add at least one skill.",
@@ -941,7 +917,7 @@ const onboardingEnglish = {
   genericError: "Could not complete onboarding. Check the fields and retry.",
   complete: "Setup complete",
   matchesTitle: "Three relevant starting points",
-  matchesBody: "No empty profile: start with these explainable matches.",
+  matchesBody: "Start exploring now. You can improve these suggestions from your profile later.",
   project: "Project",
   person: "Person",
   projectMatch: "Relevant to your selected skills and availability",
@@ -955,8 +931,9 @@ const onboardingEnglish = {
 
 const onboardingUkrainian = {
   ...onboardingEnglish,
-  time: "Налаштування за 3–5 хвилин",
+  time: "Один вибір зараз, деталі пізніше",
   title: "Знайдімо найкращий наступний крок",
+  optional: "необов’язково",
   intentTitle: "Що ви хочете зробити?",
   intentHint: "Від цього залежить, що ми покажемо одразу після налаштування.",
   join: "Приєднатися до проєкту",
@@ -966,7 +943,7 @@ const onboardingUkrainian = {
   both: "І те, й інше",
   bothHint: "Дивитися проєкти й людей із доповнювальними навичками.",
   roleSkills: "Ваша роль і навички",
-  roleSkillsHint: "Оберіть основну роль і чесно вкажіть рівень навичок.",
+  roleSkillsHint: "Додайте це зараз для кращих збігів або заповніть пізніше у профілі.",
   primaryRole: "Основна роль",
   chooseRole: "Оберіть роль",
   skills: "Навички",
@@ -977,7 +954,7 @@ const onboardingUkrainian = {
   advanced: "Просунутий",
   removeSkill: "Видалити навичку",
   availability: "Доступність",
-  availabilityHint: "Лише дані, потрібні для реалістичного перетину.",
+  availabilityHint: "Усі ці поля можна додати або змінити пізніше у профілі.",
   timeZone: "Часовий пояс",
   hours: "Годин на тиждень",
   startDate: "Дата початку",
@@ -987,7 +964,8 @@ const onboardingUkrainian = {
   hybrid: "Гібридно",
   languages: "Робочі мови",
   goalImports: "Ваша мета й необов’язковий імпорт",
-  importsOptional: "Імпорт необов’язковий. Нічого не зберігається до вашої перевірки.",
+  importsOptional:
+    "Нічого не зберігається до вашої перевірки, а весь розділ можна заповнити пізніше.",
   goal: "Мета",
   goalPlaceholder: "Чого ви хочете досягти завдяки цій співпраці?",
   githubImport: "Імпорт доказів із GitHub (необов’язково)",
@@ -1010,7 +988,9 @@ const onboardingUkrainian = {
   role: "Роль",
   back: "Назад",
   next: "Продовжити",
-  finish: "Зберегти й показати збіги",
+  finish: "Зберегти й продовжити",
+  finishLater: "Заповнити пізніше",
+  profileLater: "Доповнити профіль",
   saving: "Збереження…",
   intentRequired: "Оберіть, що ви хочете зробити.",
   roleSkillsRequired: "Оберіть роль і додайте хоча б одну навичку.",
@@ -1019,7 +999,7 @@ const onboardingUkrainian = {
   genericError: "Не вдалося завершити онбординг. Перевірте поля й повторіть.",
   complete: "Налаштування завершено",
   matchesTitle: "Три релевантні варіанти для старту",
-  matchesBody: "Без порожнього профілю: почніть із пояснюваних збігів.",
+  matchesBody: "Почніть перегляд зараз. Покращити ці пропозиції можна пізніше у профілі.",
   project: "Проєкт",
   person: "Людина",
   projectMatch: "Відповідає вашим навичкам і доступності",
@@ -1033,8 +1013,9 @@ const onboardingUkrainian = {
 
 const onboardingPolish = {
   ...onboardingEnglish,
-  time: "Konfiguracja w 3–5 minut",
+  time: "Jeden wybór teraz, szczegóły później",
   title: "Znajdźmy najlepszy kolejny krok",
+  optional: "opcjonalnie",
   intentTitle: "Co chcesz zrobić?",
   intentHint: "Od tego zależy, co pokażemy od razu po konfiguracji.",
   join: "Dołączyć do projektu",
@@ -1044,7 +1025,7 @@ const onboardingPolish = {
   both: "Jedno i drugie",
   bothHint: "Przeglądaj projekty oraz osoby z uzupełniającymi umiejętnościami.",
   roleSkills: "Twoja rola i umiejętności",
-  roleSkillsHint: "Wybierz główną rolę i uczciwie określ poziom umiejętności.",
+  roleSkillsHint: "Dodaj je teraz dla lepszych dopasowań albo uzupełnij później w profilu.",
   primaryRole: "Główna rola",
   chooseRole: "Wybierz rolę",
   skills: "Umiejętności",
@@ -1055,7 +1036,7 @@ const onboardingPolish = {
   advanced: "Zaawansowany",
   removeSkill: "Usuń umiejętność",
   availability: "Dostępność",
-  availabilityHint: "Tylko dane potrzebne do znalezienia realistycznego dopasowania.",
+  availabilityHint: "Wszystkie te pola możesz dodać lub zmienić później w profilu.",
   timeZone: "Strefa czasowa",
   hours: "Godziny tygodniowo",
   startDate: "Data rozpoczęcia",
@@ -1065,7 +1046,8 @@ const onboardingPolish = {
   hybrid: "Hybrydowo",
   languages: "Języki zespołu",
   goalImports: "Twój cel i opcjonalny import",
-  importsOptional: "Import jest opcjonalny. Nic nie zapisujemy przed Twoją akceptacją.",
+  importsOptional:
+    "Nic nie zapisujemy przed Twoją akceptacją, a całą sekcję możesz uzupełnić później.",
   goal: "Cel",
   goalPlaceholder: "Co chcesz osiągnąć dzięki tej współpracy?",
   githubImport: "Import dowodów z GitHub (opcjonalnie)",
@@ -1087,7 +1069,9 @@ const onboardingPolish = {
   role: "Rola",
   back: "Wróć",
   next: "Dalej",
-  finish: "Zapisz i pokaż dopasowania",
+  finish: "Zapisz i kontynuuj",
+  finishLater: "Uzupełnię później",
+  profileLater: "Uzupełnij profil",
   saving: "Zapisywanie…",
   intentRequired: "Wybierz, co chcesz zrobić.",
   roleSkillsRequired: "Wybierz rolę i dodaj co najmniej jedną umiejętność.",
@@ -1096,7 +1080,7 @@ const onboardingPolish = {
   genericError: "Nie udało się ukończyć onboardingu. Sprawdź pola i spróbuj ponownie.",
   complete: "Konfiguracja zakończona",
   matchesTitle: "Trzy trafne punkty startowe",
-  matchesBody: "Bez pustego profilu: zacznij od wyjaśnialnych dopasowań.",
+  matchesBody: "Zacznij przeglądać teraz. Sugestie możesz później ulepszyć w profilu.",
   project: "Projekt",
   person: "Osoba",
   projectMatch: "Pasuje do Twoich umiejętności i dostępności",

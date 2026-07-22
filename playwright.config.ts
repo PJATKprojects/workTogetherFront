@@ -45,7 +45,10 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: `npm run dev -- --hostname 127.0.0.1 --port ${port}`,
+    // Exercise the same optimized server mode deployed by Vercel. Running the
+    // PWA worker against Turbopack HMR can create browser-specific reload loops
+    // that do not exist with immutable production chunks.
+    command: `npm run preview -- --hostname 127.0.0.1 --port ${port}`,
     url: baseURL,
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
@@ -54,6 +57,7 @@ export default defineConfig({
       NEXT_PUBLIC_API_URL: baseURL,
       NEXT_PUBLIC_REALTIME_URL: baseURL,
       NEXT_PUBLIC_DISABLE_REALTIME: "true",
+      CSP_UPGRADE_INSECURE_REQUESTS: "false",
     },
   },
 });

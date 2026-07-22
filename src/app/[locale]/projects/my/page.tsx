@@ -6,6 +6,7 @@ import { MyProjectList } from "@/components/projects/my-project-list";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { BackLink } from "@/components/ui/back-link";
+import { PlanSummaryCard } from "@/components/billing/plan-summary-card";
 import { getMessages, isLocale } from "@/i18n/config";
 
 export default async function MyProjectsPage({ params }: { params: Promise<{ locale: string }> }) {
@@ -24,7 +25,10 @@ export default async function MyProjectsPage({ params }: { params: Promise<{ loc
           >
             <BackLink href={`/${raw}/profile`} label={t.common.back} />
             <h1 className="mb-8 text-3xl font-semibold">{t.profile.myProjects}</h1>
-            <MyProjectList locale={raw} messages={t} />
+            <PlanSummaryCard locale={raw} />
+            <div className="mt-8">
+              <MyProjectList locale={raw} messages={t} />
+            </div>
           </main>
         </AuthGuard>
       </Suspense>

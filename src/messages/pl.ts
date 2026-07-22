@@ -1,5 +1,6 @@
 import type { SiteMessages } from "./types";
 import { plPolicyMessages } from "./policies/pl";
+import { paidPrivacy, paidTerms } from "./paid-service-legal";
 
 /**
  * Polish catalog. It deliberately does not inherit English values: TypeScript
@@ -104,6 +105,7 @@ export const pl: SiteMessages = {
     rights: "Wszelkie prawa zastrzeżone.",
     projects: "Projekty",
     howItWorks: "Jak to działa",
+    install: "Dodaj do urządzenia",
     login: "Zaloguj się",
     signUp: "Załóż konto",
     profile: "Profil",
@@ -757,7 +759,7 @@ export const pl: SiteMessages = {
     metaDescription:
       "Zasady korzystania z WorkTogether: konta, projekty, zgłoszenia, bezpieczeństwo i odpowiedzialność.",
     title: "Regulamin",
-    updated: "18 lipca 2026",
+    updated: "22 lipca 2026",
     intro:
       "Niniejszy Regulamin określa zasady korzystania z WorkTogether — platformy do publikowania projektów, szukania osób i dołączania do zespołów. Utworzenie konta lub dalsze korzystanie z usługi oznacza akceptację Regulaminu.",
     sections: [
@@ -765,7 +767,7 @@ export const pl: SiteMessages = {
         heading: "1. Usługa",
         body: [
           "Usługodawcą jest podmiot wskazany w ramce powyżej. WorkTogether świadczy drogą elektroniczną usługę konta, profilu, publikacji projektów i ról, zgłoszeń, wiadomości oraz narzędzi współpracy.",
-          "Pilotaż jest bezpłatny. WorkTogether nie jest pracodawcą, agencją zatrudnienia, dostawcą płatności ani stroną ustaleń między członkami zespołu.",
+          "Usługa ma plan bezpłatny i opcjonalny, opłacany z góry dostęp Pro. WorkTogether nie jest pracodawcą, agencją zatrudnienia, dostawcą płatności ani stroną ustaleń między członkami zespołu.",
         ],
       },
       {
@@ -836,6 +838,7 @@ export const pl: SiteMessages = {
           "Regulamin podlega prawu polskiemu. Wybór ten nie pozbawia konsumenta bezwzględnej ochrony państwa jego zwykłego pobytu, a właściwość sądu wynika z obowiązujących przepisów.",
         ],
       },
+      paidTerms.pl,
     ],
   },
   privacy: {
@@ -843,7 +846,7 @@ export const pl: SiteMessages = {
     metaDescription:
       "Jakie dane zbiera WorkTogether, dlaczego je wykorzystuje, jak długo je przechowuje i jakie masz prawa.",
     title: "Polityka prywatności",
-    updated: "18 lipca 2026",
+    updated: "22 lipca 2026",
     intro:
       "Administratorem danych przetwarzanych w witrynie i API jest operator wskazany powyżej. Zbieramy dane potrzebne do działania platformy dla osób dorosłych, nie sprzedajemy danych osobowych i nie wykorzystujemy ich do reklam behawioralnych.",
     sections: [
@@ -925,6 +928,7 @@ export const pl: SiteMessages = {
           "Pytania i żądania dotyczące danych: support@worktogether.app. Możesz też złożyć skargę do właściwego organu ochrony danych.",
         ],
       },
+      paidPrivacy.pl,
     ],
   },
   ...plPolicyMessages,

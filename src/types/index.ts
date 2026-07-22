@@ -1,4 +1,5 @@
 export * from "./Application";
+export * from "./Billing";
 export * from "./Chat";
 export * from "./Common";
 export * from "./Lookup";

@@ -321,14 +321,16 @@ function FormField({
   children: ReactNode;
 }>) {
   return (
-    <label htmlFor={id} className="grid gap-1.5 text-sm font-semibold">
-      {label}
+    <div className="grid gap-1.5 text-sm">
+      <label htmlFor={id} className="font-semibold">
+        {label}
+      </label>
       {children}
       <span id={`${id}-hint`} className="text-xs font-normal leading-5 text-muted-foreground">
         {hint}
       </span>
       <FieldError id={`${id}-error`} message={error} />
-    </label>
+    </div>
   );
 }
 

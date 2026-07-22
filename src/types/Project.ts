@@ -38,6 +38,7 @@ export interface ProjectListItem {
   pendingApplicationsCount: number;
   isRecruitmentClosed: boolean;
   isHidden: boolean;
+  planRestrictionCode: "free_active_project_limit" | null;
   archivedAt: string | null;
   healthStatus: ProjectHealth;
   lastActivityAt: string;

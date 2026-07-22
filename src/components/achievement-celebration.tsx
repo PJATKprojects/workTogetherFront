@@ -2,14 +2,14 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { usePathname } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 import { useAuth } from "@/hooks/use-auth";
 import { queryKeys } from "@/lib/query/keys";
 import { onboardingService } from "@/services/onboardingService";
 
 const labels: Record<string, { en: string; uk: string }> = {
-  bronze_availability: { en: "Availability added", uk: "Доступність додано" },
+  bronze_onboarding: { en: "Onboarding complete", uk: "Онбординг завершено" },
   bronze_skills: { en: "Three skills added", uk: "Три навички додано" },
   bronze_explorer: { en: "Project explorer", uk: "Дослідник проєктів" },
   bronze_saved_search: { en: "First saved search", uk: "Перший збережений пошук" },
@@ -18,11 +18,15 @@ const labels: Record<string, { en: string; uk: string }> = {
   first_team_charter: { en: "First team charter", uk: "Перший team charter" },
 };
 const noUnlockedAchievements: string[] = [];
+const achievementToastDurationMs = 3_500;
 
 export function AchievementCelebration() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const pathname = usePathname();
-  const uk = pathname.split("/")[1] === "uk";
+  const locale = pathname.split("/")[1];
+  const uk = locale === "uk";
+  const pl = locale === "pl";
+  const [dismissedNotification, setDismissedNotification] = useState("");
   const query = useQuery({
     queryKey: queryKeys.onboarding.progress(),
     queryFn: onboardingService.progress,
@@ -31,14 +35,31 @@ export function AchievementCelebration() {
     refetchInterval: isAuthenticated ? 60_000 : false,
   });
   const unlocked = query.data?.newlyUnlocked ?? noUnlockedAchievements;
+  const notificationKey = unlocked.length ? `${user?.id ?? "unknown"}:${unlocked.join("|")}` : "";
+  const refetch = query.refetch;
 
   useEffect(() => {
-    if (!unlocked.length) return;
-    const timer = window.setTimeout(() => void query.refetch(), 6_000);
+    if (!notificationKey || dismissedNotification === notificationKey) return;
+    const timer = window.setTimeout(() => {
+      setDismissedNotification(notificationKey);
+      void refetch();
+    }, achievementToastDurationMs);
     return () => window.clearTimeout(timer);
-  }, [query, unlocked]);
+  }, [dismissedNotification, notificationKey, refetch]);
 
-  if (!isAuthenticated || !unlocked.length) return null;
+  if (!isAuthenticated || !unlocked.length || dismissedNotification === notificationKey) {
+    return null;
+  }
+
+  const dismissLabel = uk
+    ? "Закрити повідомлення"
+    : pl
+      ? "Zamknij powiadomienie"
+      : "Dismiss notification";
+  const dismiss = () => {
+    setDismissedNotification(notificationKey);
+    void refetch();
+  };
 
   return (
     <aside
@@ -50,7 +71,7 @@ export function AchievementCelebration() {
         <span aria-hidden="true" className="text-3xl">
           🎉
         </span>
-        <div>
+        <div className="min-w-0 flex-1">
           <p className="font-semibold">{uk ? "Досягнення відкрито" : "Achievement unlocked"}</p>
           <p className="mt-1 text-sm text-muted-foreground">
             {unlocked
@@ -58,6 +79,14 @@ export function AchievementCelebration() {
               .join(", ")}
           </p>
         </div>
+        <button
+          type="button"
+          onClick={dismiss}
+          aria-label={dismissLabel}
+          className="focus-ring flex size-9 shrink-0 items-center justify-center rounded-xl text-xl leading-none text-muted-foreground transition hover:bg-muted hover:text-foreground"
+        >
+          <span aria-hidden="true">×</span>
+        </button>
       </div>
       <div className="absolute inset-x-0 bottom-0 h-1 origin-left animate-pulse bg-linear-to-r from-warning to-primary" />
     </aside>

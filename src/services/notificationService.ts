@@ -12,7 +12,8 @@ export interface NotificationItem {
     | "mention"
     | "deadline"
     | "team_update"
-    | "moderation";
+    | "moderation"
+    | "plan_limit_applied";
   dataJson: string;
   actionUrl: string;
   createdAt: string;

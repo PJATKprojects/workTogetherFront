@@ -163,6 +163,7 @@ export type SiteMessages = {
     myApplications: string;
     projects: string;
     howItWorks: string;
+    install: string;
     contact: string;
     terms: string;
     privacy: string;

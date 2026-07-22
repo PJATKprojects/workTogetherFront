@@ -140,7 +140,7 @@ export function MfaStepUpDialog({ locale }: Readonly<{ locale: Locale }>) {
             <Link
               href={withLocale(locale, "/profile/security")}
               onClick={close}
-              className="focus-ring rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground"
+              className="focus-ring inline-flex min-h-11 items-center justify-center rounded-xl bg-primary px-4 py-2 text-center text-sm font-semibold leading-snug text-primary-foreground"
             >
               {text.setupAction}
             </Link>
