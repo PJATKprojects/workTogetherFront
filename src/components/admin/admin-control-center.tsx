@@ -12,15 +12,11 @@ import { localText, type Locale } from "@/i18n/locales";
 import { withLocale } from "@/i18n/paths";
 import { getApiError } from "@/lib/api-error";
 import { formatDateTime } from "@/lib/format";
-import {
-  adminService,
-  type AdminJob,
-  type AdminOverview,
-  type AdminUser,
-} from "@/services/adminService";
+import { adminService, type AdminJob, type AdminOverview } from "@/services/adminService";
 
 import { EmailOutboxAdmin } from "./email-outbox-admin";
 import { ModerationAdmin } from "./moderation-admin";
+import { UsersAdmin } from "./users-admin";
 
 export type AdminTab = "overview" | "moderation" | "delivery" | "jobs" | "users";
 
@@ -115,7 +111,7 @@ export function AdminControlCenter({
           {tab === "moderation" ? <ModerationAdmin locale={locale} /> : null}
           {tab === "delivery" ? <EmailOutboxAdmin locale={locale} /> : null}
           {tab === "jobs" ? <JobsPanel locale={locale} /> : null}
-          {tab === "users" ? <UsersPanel locale={locale} /> : null}
+          {tab === "users" ? <UsersAdmin locale={locale} /> : null}
         </section>
       </main>
     </div>
@@ -519,188 +515,6 @@ function JobsPanel({ locale }: Readonly<{ locale: Locale }>) {
   );
 }
 
-function UsersPanel({ locale }: Readonly<{ locale: Locale }>) {
-  const [users, setUsers] = useState<AdminUser[]>([]);
-  const [search, setSearch] = useState("");
-  const [error, setError] = useState("");
-  const [busy, setBusy] = useState("");
-  const [draft, setDraft] = useState<
-    Record<number, { type: "domain" | "organization"; label: string }>
-  >({});
-  const labels = getLabels(locale);
-
-  const load = useCallback(
-    async (query = "") => {
-      setError("");
-      try {
-        setUsers((await adminService.users(query)).items);
-      } catch (value) {
-        setError(getApiError(value, labels.loadError).message);
-      }
-    },
-    [labels.loadError]
-  );
-
-  useEffect(() => {
-    const timer = window.setTimeout(() => void load(), 0);
-    return () => window.clearTimeout(timer);
-  }, [load]);
-
-  const grant = async (user: AdminUser) => {
-    const value = draft[user.id] ?? { type: "domain" as const, label: "" };
-    if (!value.label.trim()) return;
-    setBusy(`grant-${user.id}`);
-    try {
-      await adminService.grantVerification(user.id, value.type, value.label.trim());
-      await load(search);
-    } catch (reason) {
-      setError(getApiError(reason, labels.actionError).message);
-    } finally {
-      setBusy("");
-    }
-  };
-
-  return (
-    <div className="grid gap-4">
-      <form
-        role="search"
-        onSubmit={(event) => {
-          event.preventDefault();
-          void load(search);
-        }}
-        className="flex flex-col gap-2 rounded-2xl border border-border bg-surface p-4 sm:flex-row"
-      >
-        <label htmlFor="admin-user-search" className="sr-only">
-          {labels.searchUsers}
-        </label>
-        <input
-          id="admin-user-search"
-          value={search}
-          onChange={(event) => setSearch(event.target.value)}
-          placeholder={labels.searchHint}
-          className="min-h-11 flex-1 rounded-xl border border-input bg-background px-3"
-        />
-        <button
-          type="submit"
-          className="focus-ring min-h-11 rounded-xl bg-foreground px-5 font-semibold text-background"
-        >
-          {labels.search}
-        </button>
-      </form>
-      {error ? (
-        <p role="alert" className="rounded-xl bg-destructive/10 p-4 text-sm text-destructive">
-          {error}
-        </p>
-      ) : null}
-      <div className="grid gap-4">
-        {users.map((user) => {
-          const value = draft[user.id] ?? { type: "domain" as const, label: "" };
-          const badges = [
-            user.badges.email ? "Email" : null,
-            user.badges.github ? "GitHub" : null,
-            user.badges.completedCollaboration ? labels.completedCollaboration : null,
-            ...user.badges.attestations.map((item) => `${item.type}: ${item.label}`),
-          ].filter(Boolean);
-          return (
-            <article key={user.id} className="rounded-2xl border border-border bg-surface p-5">
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div>
-                  <h2 className="font-semibold">
-                    #{user.id} · {user.userName}
-                  </h2>
-                  <p className="mt-1 text-sm text-muted-foreground">{user.email}</p>
-                  <div className="mt-2 flex flex-wrap gap-2">
-                    <StatusPill tone={user.isActive ? "good" : "bad"}>
-                      {user.isActive ? labels.active : labels.inactive}
-                    </StatusPill>
-                    {user.isAdmin ? <StatusPill tone="warn">{labels.admin}</StatusPill> : null}
-                    {badges.map((badge) => (
-                      <StatusPill key={badge} tone="neutral">
-                        {badge}
-                      </StatusPill>
-                    ))}
-                    {user.badges.attestations.map((badge) => (
-                      <button
-                        key={`revoke-${badge.type}`}
-                        type="button"
-                        disabled={busy === `revoke-${user.id}-${badge.type}`}
-                        onClick={() => {
-                          setBusy(`revoke-${user.id}-${badge.type}`);
-                          void adminService
-                            .revokeVerification(user.id, badge.type)
-                            .then(() => load(search))
-                            .catch((reason) =>
-                              setError(getApiError(reason, labels.actionError).message)
-                            )
-                            .finally(() => setBusy(""));
-                        }}
-                        className="focus-ring rounded-full border border-destructive/30 bg-destructive/10 px-2.5 py-1 text-xs font-semibold text-destructive disabled:opacity-40"
-                      >
-                        {labels.revoke}: {badge.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-                <div className="text-right text-xs text-muted-foreground">
-                  <p>
-                    {labels.created}: {formatDateTime(user.createdAt, locale)}
-                  </p>
-                  <p>
-                    {labels.sessions}: {user.activeSessions}
-                  </p>
-                  <p>
-                    {labels.loginMethods}: {user.loginMethods.join(", ") || "password"}
-                  </p>
-                </div>
-              </div>
-              <div className="mt-4 grid gap-2 border-t border-border pt-4 sm:grid-cols-[160px_1fr_auto]">
-                <select
-                  aria-label={labels.badgeType}
-                  value={value.type}
-                  onChange={(event) =>
-                    setDraft((current) => ({
-                      ...current,
-                      [user.id]: {
-                        ...value,
-                        type: event.target.value as "domain" | "organization",
-                      },
-                    }))
-                  }
-                  className="min-h-10 rounded-xl border border-input bg-background px-3 text-sm"
-                >
-                  <option value="domain">Domain</option>
-                  <option value="organization">Organization</option>
-                </select>
-                <input
-                  aria-label={labels.badgeLabel}
-                  value={value.label}
-                  maxLength={160}
-                  onChange={(event) =>
-                    setDraft((current) => ({
-                      ...current,
-                      [user.id]: { ...value, label: event.target.value },
-                    }))
-                  }
-                  placeholder={labels.badgeLabel}
-                  className="min-h-10 rounded-xl border border-input bg-background px-3 text-sm"
-                />
-                <button
-                  type="button"
-                  disabled={!value.label.trim() || busy === `grant-${user.id}`}
-                  onClick={() => void grant(user)}
-                  className="focus-ring min-h-10 rounded-xl border border-border px-4 text-sm font-semibold hover:bg-muted disabled:opacity-40"
-                >
-                  {labels.grant}
-                </button>
-              </div>
-            </article>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
 function MetricGroup({ title, rows }: Readonly<{ title: string; rows: [string, string][] }>) {
   return (
     <section className="rounded-2xl border border-border bg-surface p-5">
@@ -836,21 +650,21 @@ function getLabels(locale: Locale) {
     signingOut: t("Signing out…", "Вихід…", "Wylogowywanie…"),
     title: t("Administration", "Адміністрування", "Administracja"),
     subtitle: t(
-      "One place for service health, moderation, delivery, scheduled jobs and account verification.",
+      "One place for service health, moderation, delivery, scheduled jobs and user management.",
       "Єдине місце для стану сервісу, модерації, доставки, фонових задач і верифікацій.",
       "Jedno miejsce do monitorowania usługi, moderacji, dostarczania, zadań i weryfikacji."
     ),
     mfa: t(
-      "Sensitive actions require recent MFA",
-      "Чутливі дії вимагають недавнього MFA",
-      "Wrażliwe działania wymagają świeżego MFA"
+      "Administrator role verified",
+      "Роль адміністратора підтверджено",
+      "Rola administratora potwierdzona"
     ),
     sections: t("Administration sections", "Розділи адміністрування", "Sekcje administracji"),
     overview: t("Overview", "Огляд", "Przegląd"),
     moderation: t("Moderation", "Модерація", "Moderacja"),
     delivery: t("Email delivery", "Доставка email", "Dostarczanie email"),
     jobs: t("Scheduled jobs", "Фонові задачі", "Zadania cykliczne"),
-    users: t("Users & badges", "Користувачі та badges", "Użytkownicy i odznaki"),
+    users: t("Users", "Користувачі", "Użytkownicy"),
     loading: t(
       "Loading operational snapshot…",
       "Завантажуємо стан системи…",

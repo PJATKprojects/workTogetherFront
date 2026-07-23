@@ -194,6 +194,8 @@ type MockState = {
   adminIllegalContentNotices: Array<Record<string, unknown>>;
   adminAppeals: Array<Record<string, unknown>>;
   adminSanctions: Array<Record<string, unknown>>;
+  adminUsers: Array<Record<string, unknown>>;
+  adminUserActions: Array<Record<string, unknown>>;
   adminJobRuns: string[];
   confirmEmailRequests: Array<Record<string, unknown>>;
   accountDeletionRequests: Array<Record<string, unknown>>;
@@ -286,6 +288,28 @@ export async function installApiMock(page: Page, options: MockOptions = {}): Pro
         isActive: true,
       },
     ],
+    adminUsers: [
+      {
+        id: 42,
+        userName: "Sam Teammate",
+        email: "s***m@example.test",
+        isActive: true,
+        isConfirmed: true,
+        isAdmin: false,
+        isCurrentUser: false,
+        activeRestriction: null,
+        createdAt: "2025-11-02T12:00:00Z",
+        loginMethods: ["github"],
+        activeSessions: 1,
+        badges: {
+          email: true,
+          github: true,
+          completedCollaboration: true,
+          attestations: [{ type: "domain", label: "example.test" }],
+        },
+      },
+    ],
+    adminUserActions: [],
     adminJobRuns: [],
     confirmEmailRequests: [],
     accountDeletionRequests: [],
@@ -480,30 +504,79 @@ export async function installApiMock(page: Page, options: MockOptions = {}): Pro
     }
 
     if (path === "/api/admin/operations/users" && method === "GET") {
+      const search = (url.searchParams.get("search") ?? "").toLowerCase();
+      const status = url.searchParams.get("status") ?? "all";
+      const role = url.searchParams.get("role") ?? "all";
+      const sort = url.searchParams.get("sort") ?? "newest";
+      const page = Number(url.searchParams.get("page") ?? "1");
+      const pageSize = Number(url.searchParams.get("pageSize") ?? "25");
+      let items = state.adminUsers.filter((item) => {
+        const restriction = item.activeRestriction as Record<string, unknown> | null | undefined;
+        if (
+          search &&
+          !String(item.id).includes(search) &&
+          !String(item.userName).toLowerCase().includes(search) &&
+          !String(item.email).toLowerCase().includes(search)
+        ) {
+          return false;
+        }
+        if (role === "admin" && !item.isAdmin) return false;
+        if (role === "member" && item.isAdmin) return false;
+        if (status === "active") return item.isActive && !item.anonymizedAt && !restriction;
+        if (status === "banned") return restriction?.type === "ban";
+        if (status === "suspended") return restriction?.type === "suspension";
+        if (status === "inactive") return !item.isActive && !item.anonymizedAt;
+        if (status === "deleted") return Boolean(item.anonymizedAt);
+        return true;
+      });
+      items = [...items].sort((left, right) => {
+        if (sort === "name") return String(left.userName).localeCompare(String(right.userName));
+        const direction = sort === "oldest" ? 1 : -1;
+        return String(left.createdAt).localeCompare(String(right.createdAt)) * direction;
+      });
+      const totalCount = items.length;
+      const totalPages = Math.ceil(totalCount / pageSize);
+      const start = (page - 1) * pageSize;
       return json(route, {
         ...emptyPage,
-        items: [
-          {
-            id: 42,
-            userName: "Sam Teammate",
-            email: "s***m@example.test",
-            isActive: true,
-            isConfirmed: true,
-            isAdmin: false,
-            createdAt: "2025-11-02T12:00:00Z",
-            loginMethods: ["github"],
-            activeSessions: 1,
-            badges: {
-              email: true,
-              github: true,
-              completedCollaboration: true,
-              attestations: [{ type: "domain", label: "example.test" }],
-            },
-          },
-        ],
-        totalCount: 1,
-        totalPages: 1,
+        items: items.slice(start, start + pageSize),
+        page,
+        pageSize,
+        totalCount,
+        totalPages,
+        hasNextPage: page < totalPages,
+        hasPreviousPage: page > 1,
       });
+    }
+
+    const adminUserDeleteMatch = path.match(/^\/api\/admin\/operations\/users\/(\d+)\/delete$/);
+    if (adminUserDeleteMatch && method === "POST") {
+      const userId = Number(adminUserDeleteMatch[1]);
+      const payload = request.postDataJSON() as Record<string, unknown>;
+      const user = state.adminUsers.find((item) => item.id === userId);
+      if (!user) return json(route, {}, 404);
+      state.adminUserActions.push({
+        kind: "delete",
+        userId,
+        reason: payload.reason,
+      });
+      Object.assign(user, {
+        userName: "Deleted user",
+        email: `d***d@invalid.local`,
+        isActive: false,
+        isAdmin: false,
+        activeRestriction: null,
+        anonymizedAt: "2026-07-23T12:00:00Z",
+        activeSessions: 0,
+        loginMethods: [],
+        badges: {
+          email: false,
+          github: false,
+          completedCollaboration: false,
+          attestations: [],
+        },
+      });
+      return route.fulfill({ status: 204 });
     }
 
     if (path === "/api/admin/moderation/reports" && method === "GET") {
@@ -573,6 +646,21 @@ export async function installApiMock(page: Page, options: MockOptions = {}): Pro
         endsAt: payload.endsAt,
         isActive: true,
       });
+      const user = state.adminUsers.find((item) => item.id === payload.userId);
+      if (user && (payload.type === "ban" || payload.type === "suspension")) {
+        user.activeRestriction = {
+          id,
+          type: payload.type,
+          reason: payload.reason,
+          startsAt: "2026-07-17T12:00:00Z",
+          endsAt: payload.endsAt,
+        };
+      }
+      state.adminUserActions.push({
+        kind: payload.type,
+        userId: payload.userId,
+        reason: payload.reason,
+      });
       return json(route, { id }, 201);
     }
 
@@ -584,6 +672,17 @@ export async function installApiMock(page: Page, options: MockOptions = {}): Pro
       if (!sanction) return json(route, {}, 404);
       sanction.isActive = false;
       sanction.revokedAt = "2026-07-17T12:01:00Z";
+      const user = state.adminUsers.find((item) => {
+        const restriction = item.activeRestriction as Record<string, unknown> | null | undefined;
+        return restriction?.id === Number(adminSanctionMatch[1]);
+      });
+      if (user) {
+        user.activeRestriction = null;
+        state.adminUserActions.push({
+          kind: "unban",
+          userId: user.id,
+        });
+      }
       return route.fulfill({ status: 204 });
     }
 
