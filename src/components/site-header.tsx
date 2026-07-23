@@ -51,7 +51,7 @@ export function SiteHeader({ locale, nav }: Props) {
                 <path d="m6 9 6 6 6-6" />
               </svg>
             </summary>
-            <nav className="glass-panel absolute left-0 top-11 grid min-w-44 gap-1 rounded-2xl p-2">
+            <nav className="glass-panel site-menu-panel absolute left-0 top-11 grid min-w-44 gap-1 rounded-2xl p-2">
               <Link
                 href={withLocale(locale, "/projects")}
                 className="rounded-xl px-3 py-2 text-sm font-medium text-muted-foreground transition hover:bg-muted hover:text-foreground"

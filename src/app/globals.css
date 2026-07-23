@@ -294,6 +294,10 @@ textarea::-webkit-scrollbar {
   box-shadow: var(--glass-shadow);
 }
 
+.site-menu-panel {
+  background: color-mix(in oklab, var(--surface) 94%, transparent);
+}
+
 .glass-card {
   background: color-mix(in oklab, var(--card) 88%, transparent);
   border: 1px solid var(--border);
