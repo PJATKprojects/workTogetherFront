@@ -12,7 +12,7 @@ test.describe("separate administration control center", () => {
     await gotoAfterAuthBootstrap(page, "/en/admin");
 
     await expect(page.getByRole("heading", { name: "Administration" })).toBeVisible();
-    await expect(page.getByText("Sensitive actions require recent MFA")).toBeVisible();
+    await expect(page.getByText("Administrator role verified")).toBeVisible();
     await expect(page.getByText("Operational alerts")).toBeVisible();
     await expect(page.getByText("Dead-letter email requires review")).toBeVisible();
     await expect(page.getByText("84.4 ms")).toBeVisible();
@@ -109,10 +109,63 @@ test.describe("separate administration control center", () => {
     await page.getByRole("button", { name: "Run safely" }).click();
     await expect.poll(() => api.adminJobRuns).toEqual(["email-outbox"]);
 
-    await page.getByRole("tab", { name: "Users & badges" }).click();
+    await page.getByRole("tab", { name: "Users" }).click();
     await expect(page.getByText("Email", { exact: true })).toBeVisible();
     await expect(page.getByText("GitHub", { exact: true })).toBeVisible();
     await expect(page.getByText("Completed collaboration", { exact: true })).toBeVisible();
     await expect(page.getByText("domain: example.test", { exact: true })).toBeVisible();
+  });
+
+  test("filters, bans, unbans and deletes accounts from the user directory", async ({ page }) => {
+    test.setTimeout(45_000);
+    const api = await installApiMock(page, { authenticated: true, admin: true });
+    await gotoAfterAuthBootstrap(page, "/en/admin?section=users");
+
+    await expect(page.getByRole("heading", { name: "User directory" })).toBeVisible();
+    await page.getByLabel("Search").fill("Sam");
+    await page.getByLabel("Role").selectOption("member");
+    await page.getByLabel("Sort").selectOption("name");
+    await page.getByRole("button", { name: "Apply filters" }).click();
+    await expect(page.getByText("1 accounts found")).toBeVisible();
+    await expect(page.getByRole("link", { name: "#42 · Sam Teammate" })).toBeVisible();
+
+    await page.getByRole("button", { name: "Ban account" }).click();
+    const banDialog = page.getByRole("alertdialog");
+    await banDialog.getByLabel("Reason").fill("Repeated automated spam confirmed by support.");
+    await banDialog.getByRole("button", { name: "Ban account" }).click();
+    await expect(page.getByRole("status")).toContainText("Sam Teammate was banned.");
+    await expect(page.getByRole("listitem").getByText("Banned", { exact: true })).toBeVisible();
+
+    await page.getByLabel("Account status").selectOption("banned");
+    await page.getByRole("button", { name: "Apply filters" }).click();
+    await expect(page.getByRole("button", { name: "Remove ban" })).toBeVisible();
+    await page.getByRole("button", { name: "Remove ban" }).click();
+    await page.getByRole("alertdialog").getByRole("button", { name: "Remove ban" }).click();
+    await expect(page.getByRole("status")).toContainText("The ban was removed from Sam Teammate.");
+
+    await page.getByLabel("Account status").selectOption("all");
+    await page.getByRole("button", { name: "Apply filters" }).click();
+    await page.getByRole("button", { name: "Delete account" }).click();
+    const deleteDialog = page.getByRole("alertdialog");
+    await deleteDialog
+      .getByLabel("Reason")
+      .fill("Duplicate spam account confirmed by support review.");
+    await deleteDialog.getByRole("button", { name: "Delete permanently" }).click();
+    await expect(page.getByRole("status")).toContainText(
+      "Sam Teammate was deleted and anonymized."
+    );
+
+    expect(api.adminUserActions).toEqual([
+      expect.objectContaining({ kind: "ban", userId: 42 }),
+      expect.objectContaining({ kind: "unban", userId: 42 }),
+      expect.objectContaining({ kind: "delete", userId: 42 }),
+    ]);
+
+    const seriousViolations = (
+      await new AxeBuilder({ page })
+        .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"])
+        .analyze()
+    ).violations.filter((item) => ["serious", "critical"].includes(item.impact ?? ""));
+    expect(seriousViolations, JSON.stringify(seriousViolations, null, 2)).toEqual([]);
   });
 });

@@ -98,6 +98,14 @@ export interface AdminUser {
   createdAt: string;
   updatedAt?: string;
   anonymizedAt?: string;
+  isCurrentUser: boolean;
+  activeRestriction?: {
+    id: number;
+    type: "ban" | "suspension";
+    reason: string;
+    startsAt: string;
+    endsAt?: string;
+  } | null;
   loginMethods: string[];
   activeSessions: number;
   badges: {
@@ -106,6 +114,17 @@ export interface AdminUser {
     completedCollaboration: boolean;
     attestations: { type: string; label: string }[];
   };
+}
+
+export type AdminUserStatus = "all" | "active" | "banned" | "suspended" | "inactive" | "deleted";
+
+export interface AdminUserQuery {
+  search?: string;
+  status?: AdminUserStatus;
+  role?: "all" | "admin" | "member";
+  sort?: "newest" | "oldest" | "name";
+  page?: number;
+  pageSize?: number;
 }
 
 export const adminService = {
@@ -123,12 +142,34 @@ export const adminService = {
   triggerJob: async (name: string) => {
     await api.post(`/api/admin/operations/jobs/${encodeURIComponent(name)}/run`);
   },
-  users: async (search = "", page = 1) =>
+  users: async (query: AdminUserQuery = {}) =>
     (
       await api.get<PagedResult<AdminUser>>("/api/admin/operations/users", {
-        params: { search: search || undefined, page },
+        params: {
+          search: query.search || undefined,
+          status: query.status ?? "all",
+          role: query.role ?? "all",
+          sort: query.sort ?? "newest",
+          page: query.page ?? 1,
+          pageSize: query.pageSize ?? 25,
+        },
       })
     ).data,
+  banUser: async (userId: number, reason: string) => {
+    await api.post("/api/admin/moderation/sanctions", {
+      userId,
+      type: "ban",
+      reason,
+    });
+  },
+  unbanUser: async (sanctionId: number) => {
+    await api.delete(`/api/admin/moderation/sanctions/${sanctionId}`);
+  },
+  deleteUser: async (userId: number, reason: string) => {
+    await api.post(`/api/admin/operations/users/${userId}/delete`, {
+      reason,
+    });
+  },
   grantVerification: async (
     userId: number,
     type: "domain" | "organization",
