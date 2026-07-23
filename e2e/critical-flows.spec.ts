@@ -189,6 +189,12 @@ test.describe("critical browser flows", () => {
     expect(api.confirmEmailRequests[0]).toEqual({ token: "one-time-confirm-token" });
     await expect(page.getByRole("status")).toContainText("Email confirmed successfully.");
 
+    await gotoAfterAuthBootstrap(
+      page,
+      "/en/auth/confirm-email?registered=1&email=alex%40example.test"
+    );
+    await expect(page.getByText(/filtered into Spam, Junk or Promotions/i)).toBeVisible();
+
     await gotoAfterAuthBootstrap(page, "/en/auth/reset-password?token=one-time-token");
 
     await page.getByLabel("New password", { exact: true }).fill("abcdefgh");

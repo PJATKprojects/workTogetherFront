@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
 import { LegalArticle } from "@/components/legal/legal-article";
+import { PrivacyPreferences } from "@/components/legal/privacy-preferences";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { getMessages, isLocale } from "@/i18n/config";
@@ -25,6 +26,7 @@ export default async function CookiesPage({ params }: Props) {
       <SiteHeader locale={locale} nav={t.nav} />
       <main id="main-content" tabIndex={-1} className="flex-1">
         <LegalArticle doc={t.cookies} shared={t.legal} identity={getLegalIdentity()} />
+        <PrivacyPreferences locale={locale} />
       </main>
       <SiteFooter footer={t.footer} locale={locale} />
     </div>

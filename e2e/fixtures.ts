@@ -179,6 +179,7 @@ type MockOptions = {
   includeAcceptedApplication?: boolean;
   onboardingProgress?: OnboardingProgress;
   accountDeletionScheduledAt?: string;
+  privacyChoice?: "necessary" | "analytics" | "unset";
 };
 
 type MockState = {
@@ -197,6 +198,7 @@ type MockState = {
   adminUsers: Array<Record<string, unknown>>;
   adminUserActions: Array<Record<string, unknown>>;
   adminJobRuns: string[];
+  analyticsVisits: number;
   confirmEmailRequests: Array<Record<string, unknown>>;
   accountDeletionRequests: Array<Record<string, unknown>>;
   accountDeletionCancellations: number;
@@ -226,6 +228,20 @@ function json(route: Route, body: unknown, status = 200) {
  * test focused while all meaningful mutations are captured in MockState.
  */
 export async function installApiMock(page: Page, options: MockOptions = {}): Promise<MockState> {
+  const privacyChoice = options.privacyChoice ?? "necessary";
+  if (privacyChoice !== "unset") {
+    await page.addInitScript((analytics: boolean) => {
+      window.localStorage.setItem(
+        "wt_privacy_choice_v1",
+        JSON.stringify({
+          version: "2026-07-23-device-v1",
+          analytics,
+          decidedAt: "2026-07-23T12:00:00.000Z",
+        })
+      );
+    }, privacyChoice === "analytics");
+  }
+
   const state: MockState = {
     signedIn: options.authenticated ?? false,
     reports: [],
@@ -308,9 +324,30 @@ export async function installApiMock(page: Page, options: MockOptions = {}): Pro
           attestations: [{ type: "domain", label: "example.test" }],
         },
       },
+      {
+        id: 77,
+        userName: "Deleted user",
+        email: "d***7@invalid.local",
+        isActive: false,
+        isConfirmed: false,
+        isAdmin: false,
+        isCurrentUser: false,
+        activeRestriction: null,
+        createdAt: "2025-08-12T09:30:00Z",
+        anonymizedAt: "2026-07-20T14:15:00Z",
+        loginMethods: [],
+        activeSessions: 0,
+        badges: {
+          email: false,
+          github: false,
+          completedCollaboration: false,
+          attestations: [],
+        },
+      },
     ],
     adminUserActions: [],
     adminJobRuns: [],
+    analyticsVisits: 0,
     confirmEmailRequests: [],
     accountDeletionRequests: [],
     accountDeletionCancellations: 0,
@@ -481,6 +518,54 @@ export async function installApiMock(page: Page, options: MockOptions = {}): Pro
       });
     }
 
+    if (path === "/api/analytics/device-visits" && method === "POST") {
+      if (!request.headers()["x-worktogether-analytics-consent"]) {
+        return json(route, { message: "Consent required" }, 400);
+      }
+      state.analyticsVisits += 1;
+      return route.fulfill({ status: 202 });
+    }
+
+    if (path === "/api/admin/operations/device-analytics" && method === "GET") {
+      const days = Number(url.searchParams.get("days") ?? "30");
+      return json(route, {
+        generatedAt: "2026-07-23T12:00:00Z",
+        rangeStart: "2026-06-24T00:00:00Z",
+        rangeEnd: "2026-07-23T23:59:59Z",
+        days,
+        totalVisits: 180,
+        previousPeriodVisits: 150,
+        devices: [
+          { key: "desktop", count: 99 },
+          { key: "mobile", count: 63 },
+          { key: "tablet", count: 18 },
+        ],
+        operatingSystems: [
+          { key: "Windows", count: 72 },
+          { key: "Android", count: 49 },
+          { key: "iOS", count: 32 },
+          { key: "macOS", count: 27 },
+        ],
+        browsers: [
+          { key: "Chrome", count: 105 },
+          { key: "Safari", count: 42 },
+          { key: "Edge", count: 24 },
+          { key: "Firefox", count: 9 },
+        ],
+        timeline: Array.from({ length: days }, (_, index) => ({
+          date: new Date(Date.UTC(2026, 6, 23 - (days - 1 - index))).toISOString(),
+          count: 2 + (index % 9),
+        })),
+        privacy: {
+          consentRequired: true,
+          storesIpAddress: false,
+          storesRawUserAgent: false,
+          storesUserId: false,
+          retentionDays: 180,
+        },
+      });
+    }
+
     if (path === "/api/admin/operations/jobs" && method === "GET") {
       return json(route, [
         {
@@ -527,7 +612,7 @@ export async function installApiMock(page: Page, options: MockOptions = {}): Pro
         if (status === "suspended") return restriction?.type === "suspension";
         if (status === "inactive") return !item.isActive && !item.anonymizedAt;
         if (status === "deleted") return Boolean(item.anonymizedAt);
-        return true;
+        return !item.anonymizedAt;
       });
       items = [...items].sort((left, right) => {
         if (sort === "name") return String(left.userName).localeCompare(String(right.userName));
@@ -691,6 +776,8 @@ export async function installApiMock(page: Page, options: MockOptions = {}): Pro
         {
           id: 801,
           actorUserId: 1,
+          actorName: "Admin Operator",
+          actorEmail: "a***r@example.test",
           action: "report_status_changed",
           entityType: "report",
           entityId: "500",

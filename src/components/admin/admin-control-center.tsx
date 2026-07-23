@@ -17,8 +17,18 @@ import { adminService, type AdminJob, type AdminOverview } from "@/services/admi
 import { EmailOutboxAdmin } from "./email-outbox-admin";
 import { ModerationAdmin } from "./moderation-admin";
 import { UsersAdmin } from "./users-admin";
+import { DeviceAnalyticsAdmin } from "./device-analytics-admin";
+import { AuditLogAdmin } from "./audit-log-admin";
 
-export type AdminTab = "overview" | "moderation" | "delivery" | "jobs" | "users";
+export type AdminTab =
+  | "overview"
+  | "analytics"
+  | "moderation"
+  | "audit"
+  | "delivery"
+  | "jobs"
+  | "users"
+  | "deleted-users";
 
 export function AdminControlCenter({
   locale,
@@ -28,10 +38,13 @@ export function AdminControlCenter({
   const labels = useMemo(() => getLabels(locale), [locale]);
   const tabs: { id: AdminTab; label: string }[] = [
     { id: "overview", label: labels.overview },
+    { id: "analytics", label: labels.analytics },
+    { id: "users", label: labels.users },
+    { id: "deleted-users", label: labels.deletedUsers },
     { id: "moderation", label: labels.moderation },
+    { id: "audit", label: labels.audit },
     { id: "delivery", label: labels.delivery },
     { id: "jobs", label: labels.jobs },
-    { id: "users", label: labels.users },
   ];
   const selectTab = (next: AdminTab) => {
     setTab(next);
@@ -108,10 +121,15 @@ export function AdminControlCenter({
           className="mt-6"
         >
           {tab === "overview" ? <OverviewPanel locale={locale} /> : null}
+          {tab === "analytics" ? <DeviceAnalyticsAdmin locale={locale} /> : null}
           {tab === "moderation" ? <ModerationAdmin locale={locale} /> : null}
+          {tab === "audit" ? <AuditLogAdmin locale={locale} /> : null}
           {tab === "delivery" ? <EmailOutboxAdmin locale={locale} /> : null}
           {tab === "jobs" ? <JobsPanel locale={locale} /> : null}
-          {tab === "users" ? <UsersAdmin locale={locale} /> : null}
+          {tab === "users" ? <UsersAdmin key="active-users" locale={locale} view="active" /> : null}
+          {tab === "deleted-users" ? (
+            <UsersAdmin key="deleted-users" locale={locale} view="deleted" />
+          ) : null}
         </section>
       </main>
     </div>
@@ -661,10 +679,13 @@ function getLabels(locale: Locale) {
     ),
     sections: t("Administration sections", "Розділи адміністрування", "Sekcje administracji"),
     overview: t("Overview", "Огляд", "Przegląd"),
+    analytics: t("Device analytics", "Аналітика пристроїв", "Analityka urządzeń"),
     moderation: t("Moderation", "Модерація", "Moderacja"),
+    audit: t("Audit log", "Журнал аудиту", "Dziennik audytu"),
     delivery: t("Email delivery", "Доставка email", "Dostarczanie email"),
     jobs: t("Scheduled jobs", "Фонові задачі", "Zadania cykliczne"),
     users: t("Users", "Користувачі", "Użytkownicy"),
+    deletedUsers: t("Deleted users", "Видалені користувачі", "Usunięci użytkownicy"),
     loading: t(
       "Loading operational snapshot…",
       "Завантажуємо стан системи…",

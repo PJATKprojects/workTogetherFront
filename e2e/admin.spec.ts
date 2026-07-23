@@ -24,8 +24,15 @@ test.describe("separate administration control center", () => {
     const overviewTab = page.getByRole("tab", { name: "Overview" });
     await overviewTab.focus();
     await page.keyboard.press("ArrowRight");
+    const analyticsTab = page.getByRole("tab", { name: "Device analytics" });
+    await expect(analyticsTab).toBeFocused();
+    await expect(analyticsTab).toHaveAttribute("aria-selected", "true");
+    await expect(page.getByRole("heading", { name: "Device analytics" })).toBeVisible();
+    await expect(page.getByText("180", { exact: true }).first()).toBeVisible();
+    await expect(page.getByText("Device mix")).toBeVisible();
+
     const moderationTab = page.getByRole("tab", { name: "Moderation" });
-    await expect(moderationTab).toBeFocused();
+    await moderationTab.click();
     await expect(moderationTab).toHaveAttribute("aria-selected", "true");
 
     await expect(page.getByRole("heading", { name: "DSA illegal-content notices" })).toBeVisible();
@@ -109,11 +116,27 @@ test.describe("separate administration control center", () => {
     await page.getByRole("button", { name: "Run safely" }).click();
     await expect.poll(() => api.adminJobRuns).toEqual(["email-outbox"]);
 
-    await page.getByRole("tab", { name: "Users" }).click();
+    await page.getByRole("tab", { name: "Users", exact: true }).click();
     await expect(page.getByText("Email", { exact: true })).toBeVisible();
     await expect(page.getByText("GitHub", { exact: true })).toBeVisible();
     await expect(page.getByText("Completed collaboration", { exact: true })).toBeVisible();
     await expect(page.getByText("domain: example.test", { exact: true })).toBeVisible();
+    await expect(page.getByLabel("Account status").locator('option[value="deleted"]')).toHaveCount(
+      0
+    );
+
+    await page.getByRole("tab", { name: "Deleted users" }).click();
+    await expect(page.getByRole("heading", { name: "Deleted users" })).toBeVisible();
+    await expect(page.getByText("#77 · Deleted user", { exact: true })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Delete account" })).toHaveCount(0);
+
+    await page.getByRole("tab", { name: "Audit log" }).click();
+    await expect(page.getByRole("heading", { name: "Administrative audit log" })).toBeVisible();
+    const auditEvent = page.locator("details").filter({ hasText: "Report status changed" });
+    await auditEvent.locator("summary").press("Enter");
+    await expect(auditEvent).toHaveAttribute("open", "");
+    await expect(page.getByText("Exact time (UTC)")).toBeVisible();
+    await expect(page.getByText("Admin Operator · a***r@example.test")).toBeVisible();
   });
 
   test("filters, bans, unbans and deletes accounts from the user directory", async ({ page }) => {

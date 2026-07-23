@@ -258,6 +258,8 @@ export const en: SiteMessages = {
     resend: "Send confirmation again",
     resending: "Sending…",
     resent: "If the account still needs confirmation, a new email has been sent.",
+    spamHint:
+      "Confirmation emails can be filtered into Spam, Junk or Promotions. If it is not in your inbox after a few minutes, check those folders and mark the message as not spam.",
     emailPlaceholder: "Email used at registration",
     login: "Go to login",
   },
@@ -762,7 +764,7 @@ export const en: SiteMessages = {
     metaDescription:
       "The rules for using WorkTogether: accounts, projects, applications, acceptable use, and liability.",
     title: "Terms of Service",
-    updated: "July 22, 2026",
+    updated: "July 23, 2026",
     intro:
       "These Terms of Service (the “Terms”) govern your use of WorkTogether — a platform where students publish projects, open team positions, and apply to join other people's projects. By creating an account or using the site you agree to these Terms. If you do not agree, do not use the service.",
     sections: [
@@ -889,13 +891,13 @@ export const en: SiteMessages = {
           "Account data: display name, nickname, email address, and password. The password is stored only as a bcrypt hash — we never store or see it in plain text.",
           "Profile data (optional, filled in by you): bio, GitHub and LinkedIn links, CV link, your technologies, and the “looking for a team” flag.",
           "Activity data: projects you create (name, description, status, positions), applications you submit and their statuses, and timestamps of these actions.",
-          "Technical data: IP address (used for rate limiting), request logs (path, method, status code, duration), and aggregated service metrics without personal identifiers.",
+          "Technical data: IP address (used for rate limiting), request logs (path, method, status code, duration), and operational metrics. If you opt in to anonymous analytics, we additionally store visit time plus broad device, operating-system and browser categories without IP, raw user agent or account ID.",
         ],
       },
       {
         heading: "2. How we use your data",
         body: [
-          "We process account, project, application and communication data to perform the service contract; security, anti-abuse and reliability data for our legitimate interests; optional imports and push after your action or consent; and records needed to comply with law.",
+          "We process account, project, application and communication data to perform the service contract; security, anti-abuse and reliability data for our legitimate interests; device analytics, optional imports and push after your action or consent; and records needed to comply with law.",
         ],
         bullets: [
           "to create and authenticate your account (email confirmation, login sessions);",
@@ -903,7 +905,7 @@ export const en: SiteMessages = {
           "to deliver applications to project owners and show you their status;",
           "to send service emails (email confirmation, new applications, and application decisions; we do not send marketing emails);",
           "to protect the service: rate limiting, abuse prevention, debugging;",
-          "to understand aggregate usage via anonymous metrics.",
+          "after your opt-in, to understand aggregate device usage through anonymous visit categories.",
         ],
       },
       {
@@ -914,6 +916,8 @@ export const en: SiteMessages = {
         bullets: [
           "wt_refresh — an HttpOnly cookie holding your refresh token; Secure in production, scoped to the auth API path, lifetime 14 days, and rotated on every session refresh. SameSite is Lax for same-site hosting and None only when the frontend and API must operate across sites.",
           "wt_locale — remembers your interface language (EN/UK/PL).",
+          "wt_privacy_choice_v1 — localStorage records your accept/reject choice, policy version and choice time so the site remembers it.",
+          "After analytics opt-in, sessionStorage records only that the current browser session has already been counted; it is cleared when the session ends.",
           "Browser localStorage keeps your theme preference and versioned unsent project, application and message drafts for up to 30 days. A draft is removed after a successful send or explicit discard. Attached files are not stored there and must be selected again.",
           "The short-lived access token is kept only in JavaScript memory and is not written to localStorage or sessionStorage.",
         ],
@@ -944,6 +948,7 @@ export const en: SiteMessages = {
           "Refresh-token hashes — at most 14 days, removed on logout or rotation.",
           "Email-confirmation tokens — 24 hours.",
           "Local browser drafts — up to 30 days, unless submitted or discarded earlier.",
+          "Consented anonymous device-analytics events — up to 180 days.",
           "Reports, sanctions, audit and outbox records — only for the documented security, evidence and operational period; exact production periods must be approved before launch and enforced by scheduled deletion.",
         ],
       },

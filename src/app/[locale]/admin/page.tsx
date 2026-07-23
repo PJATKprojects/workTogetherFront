@@ -4,7 +4,16 @@ import { AdminControlCenter } from "@/components/admin/admin-control-center";
 import { AdminGuard } from "@/components/guards/admin-guard";
 import { isLocale } from "@/i18n/locales";
 
-const adminTabs = ["overview", "moderation", "delivery", "jobs", "users"] as const;
+const adminTabs = [
+  "overview",
+  "analytics",
+  "moderation",
+  "audit",
+  "delivery",
+  "jobs",
+  "users",
+  "deleted-users",
+] as const;
 type AdminTab = (typeof adminTabs)[number];
 
 function isAdminTab(value: string | undefined): value is AdminTab {

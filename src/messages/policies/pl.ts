@@ -4,11 +4,11 @@ export const plPolicyMessages = {
   cookies: {
     metaTitle: "Pliki cookies i pamięć przeglądarki — WorkTogether",
     metaDescription:
-      "Niezbędne pliki cookies, pamięć lokalna i opcjonalne dane push używane przez WorkTogether.",
+      "Niezbędna pamięć przeglądarki i opcjonalna anonimowa analityka urządzeń WorkTogether.",
     title: "Pliki cookies i pamięć przeglądarki",
-    updated: "18 lipca 2026",
+    updated: "23 lipca 2026",
     intro:
-      "WorkTogether korzysta obecnie tylko z pamięci potrzebnej do wykonania funkcji, o którą prosisz, albo zapamiętania Twoich ustawień. Nie używamy cookies reklamowych ani cookies zewnętrznej analityki.",
+      "WorkTogether korzysta z niezbędnej własnej pamięci przeglądarki oraz — wyłącznie po Twojej zgodzie — z minimalnej analityki urządzeń. Nie używamy cookies reklamowych, śledzenia między witrynami ani zewnętrznej analityki.",
     sections: [
       {
         heading: "1. Co zapisujemy",
@@ -18,25 +18,31 @@ export const plPolicyMessages = {
           "wt_locale: wybrany język interfejsu, przechowywany do jednego roku.",
           "theme w localStorage: wybór jasnego, ciemnego lub systemowego wyglądu, przechowywany do czasu usunięcia danych witryny.",
           "Wersjonowane szkice projektu, zgłoszenia i wiadomości w localStorage: do 30 dni; usuwane po udanym wysłaniu albo świadomym odrzuceniu. Pliki nigdy nie trafiają do szkicu.",
+          "wt_privacy_choice_v1 w localStorage: zapisuje zgodę albo odmowę opcjonalnej analityki, czas wyboru i wersję polityki. Dzięki temu nie pytamy na każdej stronie; wpis pozostaje do zmiany wyboru lub usunięcia danych witryny.",
           "Subskrypcja push: tworzona dopiero po włączeniu powiadomień; przechowywana przez przeglądarkę, dostawcę push i WorkTogether do wyłączenia lub unieważnienia.",
         ],
       },
       {
-        heading: "2. Dlaczego nie wyświetlamy banera zgody",
+        heading: "2. Opcjonalna anonimowa analityka urządzeń",
         body: [
-          "Art. 399 Prawa komunikacji elektronicznej pozwala na zapis lub dostęp, gdy jest to niezbędne do transmisji komunikatu albo dostarczenia usługi elektronicznej, której użytkownik wyraźnie zażądał. Obecne mechanizmy ograniczamy do tych celów.",
-          "Baner obejmujący wyłącznie pamięć niezbędną nie dawałby rzeczywistego wyboru, dlatego przekazujemy pełną informację na tej stronie.",
+          "Przy pierwszej wizycie baner daje równorzędny wybór: tylko pamięć niezbędna albo dodatkowa analityka. Analityka pozostaje wyłączona do chwili aktywnej zgody.",
+          "Po zgodzie wysyłane jest jedno zdarzenie na sesję przeglądarki. Serwer od razu klasyfikuje żądanie i zapisuje wyłącznie czas zdarzenia, ogólną kategorię urządzenia (komputer, telefon, tablet lub inne), system operacyjny, rodzinę przeglądarki i wersję polityki zgody.",
+        ],
+        bullets: [
+          "W zdarzeniach nie zapisujemy adresu IP, pełnego ciągu user agent, ID konta, identyfikatora reklamowego ani trwałego identyfikatora odwiedzającego.",
+          "Statystyki służą wyłącznie do priorytetyzacji testów przeglądarek, urządzeń i responsywnego interfejsu.",
+          "Zdarzenia przechowujemy do 180 dni, a administratorzy widzą wyłącznie zagregowane wykresy.",
         ],
       },
       {
-        heading: "3. Brak reklam i opcjonalnej analityki",
+        heading: "3. Twój wybór i wycofanie zgody",
         body: [
-          "Nie ustawiamy cookies reklamowych, śledzenia między witrynami ani cookies zewnętrznej analityki.",
-          "Jeżeli dodamy technologię analityczną lub marketingową, która nie jest niezbędna, pozostanie wyłączona do chwili udzielenia zgody. Odrzucenie będzie równie łatwe jak akceptacja, a wycofanie zgody nie ograniczy podstawowych funkcji.",
+          "Akceptacja i odmowa są dostępne w pierwszym banerze w tej samej liczbie kroków. Wybór możesz zmienić w każdej chwili za pomocą ustawień na tej stronie.",
+          "Wycofanie zatrzymuje przyszłe zdarzenia analityczne i nie wpływa na logowanie ani podstawowe funkcje. Ponieważ wcześniejsze zdarzenia nie zawierają ID odwiedzającego ani konta, nie można ich powiązać z Tobą w celu indywidualnego usunięcia.",
         ],
       },
       {
-        heading: "4. Twoje ustawienia",
+        heading: "4. Pamięć niezbędna i ustawienia przeglądarki",
         body: [
           "Możesz się wylogować, aby unieważnić aktywną sesję, wyłączyć push w profilu lub przeglądarce, odrzucić pojedynczy szkic albo usunąć dane WorkTogether w ustawieniach przeglądarki.",
           "Zablokowanie wszystkich niezbędnych cookies może uniemożliwić logowanie i działanie zamówionych funkcji.",

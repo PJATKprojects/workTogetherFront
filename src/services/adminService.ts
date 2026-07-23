@@ -88,6 +88,26 @@ export interface AdminJob {
   manualRunPending: boolean;
 }
 
+export interface AdminDeviceAnalytics {
+  generatedAt: string;
+  rangeStart: string;
+  rangeEnd: string;
+  days: number;
+  totalVisits: number;
+  previousPeriodVisits: number;
+  devices: Array<{ key: string; count: number }>;
+  operatingSystems: Array<{ key: string; count: number }>;
+  browsers: Array<{ key: string; count: number }>;
+  timeline: Array<{ date: string; count: number }>;
+  privacy: {
+    consentRequired: boolean;
+    storesIpAddress: boolean;
+    storesRawUserAgent: boolean;
+    storesUserId: boolean;
+    retentionDays: number;
+  };
+}
+
 export interface AdminUser {
   id: number;
   userName: string;
@@ -139,6 +159,12 @@ export const adminService = {
   },
   overview: async () => (await api.get<AdminOverview>("/api/admin/operations/overview")).data,
   jobs: async () => (await api.get<AdminJob[]>("/api/admin/operations/jobs")).data,
+  deviceAnalytics: async (days = 30) =>
+    (
+      await api.get<AdminDeviceAnalytics>("/api/admin/operations/device-analytics", {
+        params: { days },
+      })
+    ).data,
   triggerJob: async (name: string) => {
     await api.post(`/api/admin/operations/jobs/${encodeURIComponent(name)}/run`);
   },

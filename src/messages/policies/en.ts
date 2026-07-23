@@ -4,11 +4,11 @@ export const enPolicyMessages = {
   cookies: {
     metaTitle: "Cookies and browser storage — WorkTogether",
     metaDescription:
-      "The strictly necessary cookies, local storage and optional push data used by WorkTogether.",
+      "Necessary browser storage and optional anonymous device analytics used by WorkTogether.",
     title: "Cookies and browser storage",
-    updated: "July 18, 2026",
+    updated: "July 23, 2026",
     intro:
-      "WorkTogether currently uses only storage needed to deliver a feature you request or remember your choices. We do not use advertising cookies or third-party analytics cookies.",
+      "WorkTogether uses necessary first-party browser storage and, only after your opt-in, privacy-minimised device analytics. We do not use advertising cookies, cross-site tracking or third-party analytics.",
     sections: [
       {
         heading: "1. What we store",
@@ -18,25 +18,31 @@ export const enPolicyMessages = {
           "wt_locale: your interface language, kept for up to one year.",
           "theme in localStorage: your light, dark or system appearance choice, kept until you clear it.",
           "Versioned project, application and message drafts in localStorage: kept for up to 30 days, removed after a successful submission or explicit discard. Files are never stored in these drafts.",
+          "wt_privacy_choice_v1 in localStorage: records whether this browser accepted or rejected optional analytics, together with the choice time and policy version. It prevents us from asking on every page and remains until you change it or clear site data.",
           "A push subscription: created only after you enable notifications; it is stored by the browser, push provider and WorkTogether until you disable or revoke it.",
         ],
       },
       {
-        heading: "2. Why no consent banner appears",
+        heading: "2. Optional anonymous device analytics",
         body: [
-          "Polish electronic communications law permits storage or access that is necessary to transmit a communication or provide an electronic service explicitly requested by the user. The current items are limited to those purposes.",
-          "A banner that offers only necessary storage would not create a meaningful choice. We explain the storage here instead.",
+          "The first time you visit, a banner offers an equal choice between necessary storage only and optional analytics. Analytics remains off until you actively allow it.",
+          "After opt-in, one event is sent per browser session. The server immediately classifies the request and stores only the event time, broad device category (desktop, phone, tablet or other), operating system, browser family and consent-policy version.",
+        ],
+        bullets: [
+          "We do not store the IP address, raw user-agent string, account ID, advertising ID or a persistent analytics visitor ID in these events.",
+          "The statistics are used only to prioritise browser, device and responsive-layout testing.",
+          "Events are retained for up to 180 days and administrators can access only aggregate charts.",
         ],
       },
       {
-        heading: "3. No advertising or optional analytics",
+        heading: "3. Your choice and withdrawal",
         body: [
-          "We do not currently set advertising, cross-site tracking or third-party analytics cookies.",
-          "If we introduce non-essential analytics or marketing technology, it will remain off until you opt in. Rejecting it will be as easy as accepting it, and withdrawing consent will not affect core service access.",
+          "Accepting and rejecting are available on the first banner with the same number of steps. You can change the choice at any time with the controls on this page.",
+          "Withdrawing stops future analytics events and does not affect login or other core features. Because past events contain no visitor or account identifier, they cannot be linked back to you for individual deletion.",
         ],
       },
       {
-        heading: "4. Your controls",
+        heading: "4. Necessary storage and browser controls",
         body: [
           "You can sign out to revoke the active refresh session, disable push in your profile or browser, discard individual drafts, or clear WorkTogether site data in browser settings.",
           "Blocking all necessary cookies can prevent login and other requested features from working.",

@@ -348,6 +348,7 @@ export type SiteMessages = {
     resend: string;
     resending: string;
     resent: string;
+    spamHint: string;
     emailPlaceholder: string;
     login: string;
   };

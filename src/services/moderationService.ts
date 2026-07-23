@@ -90,6 +90,8 @@ export interface AppealItem {
 export interface AuditItem {
   id: number;
   actorUserId?: number;
+  actorName?: string;
+  actorEmail?: string;
   action: string;
   entityType: string;
   entityId: string;
