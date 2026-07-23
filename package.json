@@ -56,7 +56,7 @@
   },
   "overrides": {
     "form-data": "4.0.6",
-    "postcss": "8.5.10",
+    "postcss": "8.5.22",
     "next": {
       "sharp": "0.35.3"
     }

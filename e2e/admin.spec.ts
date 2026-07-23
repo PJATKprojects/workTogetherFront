@@ -117,6 +117,9 @@ test.describe("separate administration control center", () => {
     await expect.poll(() => api.adminJobRuns).toEqual(["email-outbox"]);
 
     await page.getByRole("tab", { name: "Users", exact: true }).click();
+    const userEmail = page.getByRole("link", { name: "sam@example.test" });
+    await expect(userEmail).toBeVisible();
+    await expect(userEmail).toHaveAttribute("href", "mailto:sam@example.test");
     await expect(page.getByText("Email", { exact: true })).toBeVisible();
     await expect(page.getByText("GitHub", { exact: true })).toBeVisible();
     await expect(page.getByText("Completed collaboration", { exact: true })).toBeVisible();
@@ -145,7 +148,7 @@ test.describe("separate administration control center", () => {
     await gotoAfterAuthBootstrap(page, "/en/admin?section=users");
 
     await expect(page.getByRole("heading", { name: "User directory" })).toBeVisible();
-    await page.getByLabel("Search").fill("Sam");
+    await page.getByLabel("Search").fill("sam@example.test");
     await page.getByLabel("Role").selectOption("member");
     await page.getByLabel("Sort").selectOption("name");
     await page.getByRole("button", { name: "Apply filters" }).click();
@@ -190,5 +193,13 @@ test.describe("separate administration control center", () => {
         .analyze()
     ).violations.filter((item) => ["serious", "critical"].includes(item.impact ?? ""));
     expect(seriousViolations, JSON.stringify(seriousViolations, null, 2)).toEqual([]);
+  });
+
+  test("keeps the user directory hidden from authenticated non-admins", async ({ page }) => {
+    await installApiMock(page, { authenticated: true, admin: false });
+    await gotoAfterAuthBootstrap(page, "/en/admin?section=users");
+
+    await expect(page).toHaveURL(/\/en\/profile$/);
+    await expect(page.getByRole("heading", { name: "User directory" })).toHaveCount(0);
   });
 });
