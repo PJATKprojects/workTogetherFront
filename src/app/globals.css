@@ -209,6 +209,33 @@ body {
   text-rendering: optimizeLegibility;
 }
 
+/*
+ * iOS Safari zooms the visual viewport when a focused editable control uses
+ * text smaller than 16px. Keep pinch-to-zoom available for accessibility and
+ * raise only text-entry controls on mobile-sized or coarse-pointer devices.
+ */
+@media (max-width: 47.999rem), (hover: none) and (pointer: coarse) {
+  :is(
+    input:not([type]),
+    input[type="date"],
+    input[type="datetime-local"],
+    input[type="email"],
+    input[type="month"],
+    input[type="number"],
+    input[type="password"],
+    input[type="search"],
+    input[type="tel"],
+    input[type="text"],
+    input[type="time"],
+    input[type="url"],
+    input[type="week"],
+    select,
+    textarea
+  ) {
+    font-size: 1rem;
+  }
+}
+
 /* Ambient page tint that gives the glass surfaces something to refract.
    Absolute (not fixed): scrolls away with the content. */
 body::before {
