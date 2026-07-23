@@ -23,20 +23,27 @@ type UserAction =
   | { kind: "delete"; user: AdminUser }
   | null;
 
-const initialQuery: Required<AdminUserQuery> = {
-  search: "",
-  status: "all",
-  role: "all",
-  sort: "newest",
-  page: 1,
-  pageSize: 25,
-};
+type UserDirectoryView = "active" | "deleted";
 
-export function UsersAdmin({ locale }: Readonly<{ locale: Locale }>) {
+function initialQuery(view: UserDirectoryView): Required<AdminUserQuery> {
+  return {
+    search: "",
+    status: view === "deleted" ? "deleted" : "all",
+    role: "all",
+    sort: "newest",
+    page: 1,
+    pageSize: 25,
+  };
+}
+
+export function UsersAdmin({
+  locale,
+  view = "active",
+}: Readonly<{ locale: Locale; view?: UserDirectoryView }>) {
   const labels = getLabels(locale);
-  const [query, setQuery] = useState(initialQuery);
+  const [query, setQuery] = useState(() => initialQuery(view));
   const [search, setSearch] = useState("");
-  const [status, setStatus] = useState<AdminUserStatus>("all");
+  const [status, setStatus] = useState<AdminUserStatus>(view === "deleted" ? "deleted" : "all");
   const [role, setRole] = useState<"all" | "admin" | "member">("all");
   const [sort, setSort] = useState<"newest" | "oldest" | "name">("newest");
   const [result, setResult] = useState<PagedResult<AdminUser> | null>(null);
@@ -151,12 +158,14 @@ export function UsersAdmin({ locale }: Readonly<{ locale: Locale }>) {
   const totalPages = Math.max(1, result?.totalPages ?? 1);
 
   return (
-    <section aria-labelledby="user-directory-title" className="grid gap-5">
+    <section aria-labelledby={`user-directory-title-${view}`} className="grid gap-5">
       <div>
-        <h2 id="user-directory-title" className="text-xl font-semibold">
-          {labels.title}
+        <h2 id={`user-directory-title-${view}`} className="text-xl font-semibold">
+          {view === "deleted" ? labels.deletedTitle : labels.title}
         </h2>
-        <p className="mt-1 max-w-3xl text-sm leading-6 text-muted-foreground">{labels.hint}</p>
+        <p className="mt-1 max-w-3xl text-sm leading-6 text-muted-foreground">
+          {view === "deleted" ? labels.deletedHint : labels.hint}
+        </p>
       </div>
 
       <form
@@ -166,14 +175,18 @@ export function UsersAdmin({ locale }: Readonly<{ locale: Locale }>) {
           setNotice("");
           setQuery({
             search: search.trim(),
-            status,
-            role,
+            status: view === "deleted" ? "deleted" : status,
+            role: view === "deleted" ? "all" : role,
             sort,
             page: 1,
             pageSize: query.pageSize,
           });
         }}
-        className="grid gap-3 rounded-2xl border border-border bg-surface p-4 md:grid-cols-2 xl:grid-cols-[minmax(240px,1fr)_180px_160px_180px_auto]"
+        className={`grid gap-3 rounded-2xl border border-border bg-surface p-4 md:grid-cols-2 ${
+          view === "deleted"
+            ? "xl:grid-cols-[minmax(240px,1fr)_180px_auto]"
+            : "xl:grid-cols-[minmax(240px,1fr)_180px_160px_180px_auto]"
+        }`}
       >
         <label className="grid gap-1.5 text-sm font-medium" htmlFor="admin-user-search">
           {labels.search}
@@ -185,35 +198,38 @@ export function UsersAdmin({ locale }: Readonly<{ locale: Locale }>) {
             className="min-h-11 rounded-xl border border-input bg-background px-3 font-normal"
           />
         </label>
-        <label className="grid gap-1.5 text-sm font-medium" htmlFor="admin-user-status">
-          {labels.status}
-          <select
-            id="admin-user-status"
-            value={status}
-            onChange={(event) => setStatus(event.target.value as AdminUserStatus)}
-            className="min-h-11 rounded-xl border border-input bg-background px-3 font-normal"
-          >
-            <option value="all">{labels.allStatuses}</option>
-            <option value="active">{labels.active}</option>
-            <option value="banned">{labels.banned}</option>
-            <option value="suspended">{labels.suspended}</option>
-            <option value="inactive">{labels.inactive}</option>
-            <option value="deleted">{labels.deleted}</option>
-          </select>
-        </label>
-        <label className="grid gap-1.5 text-sm font-medium" htmlFor="admin-user-role">
-          {labels.role}
-          <select
-            id="admin-user-role"
-            value={role}
-            onChange={(event) => setRole(event.target.value as "all" | "admin" | "member")}
-            className="min-h-11 rounded-xl border border-input bg-background px-3 font-normal"
-          >
-            <option value="all">{labels.allRoles}</option>
-            <option value="admin">{labels.admins}</option>
-            <option value="member">{labels.members}</option>
-          </select>
-        </label>
+        {view === "active" ? (
+          <label className="grid gap-1.5 text-sm font-medium" htmlFor="admin-user-status">
+            {labels.status}
+            <select
+              id="admin-user-status"
+              value={status}
+              onChange={(event) => setStatus(event.target.value as AdminUserStatus)}
+              className="min-h-11 rounded-xl border border-input bg-background px-3 font-normal"
+            >
+              <option value="all">{labels.allStatuses}</option>
+              <option value="active">{labels.active}</option>
+              <option value="banned">{labels.banned}</option>
+              <option value="suspended">{labels.suspended}</option>
+              <option value="inactive">{labels.inactive}</option>
+            </select>
+          </label>
+        ) : null}
+        {view === "active" ? (
+          <label className="grid gap-1.5 text-sm font-medium" htmlFor="admin-user-role">
+            {labels.role}
+            <select
+              id="admin-user-role"
+              value={role}
+              onChange={(event) => setRole(event.target.value as "all" | "admin" | "member")}
+              className="min-h-11 rounded-xl border border-input bg-background px-3 font-normal"
+            >
+              <option value="all">{labels.allRoles}</option>
+              <option value="admin">{labels.admins}</option>
+              <option value="member">{labels.members}</option>
+            </select>
+          </label>
+        ) : null}
         <label className="grid gap-1.5 text-sm font-medium" htmlFor="admin-user-sort">
           {labels.sort}
           <select
@@ -222,9 +238,13 @@ export function UsersAdmin({ locale }: Readonly<{ locale: Locale }>) {
             onChange={(event) => setSort(event.target.value as "newest" | "oldest" | "name")}
             className="min-h-11 rounded-xl border border-input bg-background px-3 font-normal"
           >
-            <option value="newest">{labels.newest}</option>
-            <option value="oldest">{labels.oldest}</option>
-            <option value="name">{labels.name}</option>
+            <option value="newest">
+              {view === "deleted" ? labels.deletedNewest : labels.newest}
+            </option>
+            <option value="oldest">
+              {view === "deleted" ? labels.deletedOldest : labels.oldest}
+            </option>
+            {view === "active" ? <option value="name">{labels.name}</option> : null}
           </select>
         </label>
         <Button type="submit" className="self-end">
@@ -465,6 +485,11 @@ function UserCard({
             <p>
               {labels.created}: {formatDateTime(user.createdAt, locale)}
             </p>
+            {user.anonymizedAt ? (
+              <p>
+                {labels.deletedAt}: {formatDateTime(user.anonymizedAt, locale)}
+              </p>
+            ) : null}
             <p>
               {labels.sessions}: {user.activeSessions}
             </p>
@@ -655,6 +680,12 @@ function getLabels(locale: Locale) {
       "Шукайте всі облікові записи, фільтруйте їхній стан і застосовуйте дії з аудитом. Видалення одразу вимикає доступ та анонімізує персональні дані.",
       "Wyszukuj wszystkie konta, filtruj ich stan i stosuj działania zapisywane w audycie. Usunięcie natychmiast blokuje dostęp i anonimizuje dane osobowe."
     ),
+    deletedTitle: t("Deleted users", "Видалені користувачі", "Usunięci użytkownicy"),
+    deletedHint: t(
+      "A separate read-only archive of anonymized accounts. These records stay out of the active user directory and retain only the minimum identifiers needed for audit integrity.",
+      "Окремий архів анонімізованих акаунтів лише для перегляду. Ці записи не потрапляють до каталогу активних користувачів і містять лише мінімальні ідентифікатори для цілісності аудиту.",
+      "Oddzielne archiwum zanonimizowanych kont tylko do odczytu. Rekordy nie trafiają na listę aktywnych użytkowników i zachowują wyłącznie minimalne identyfikatory potrzebne dla spójności audytu."
+    ),
     search: t("Search", "Пошук", "Szukaj"),
     searchHint: t(
       "Username, user ID, or exact email",
@@ -675,6 +706,8 @@ function getLabels(locale: Locale) {
     members: t("Members", "Користувачі", "Użytkownicy"),
     newest: t("Newest first", "Спочатку нові", "Najnowsze"),
     oldest: t("Oldest first", "Спочатку старі", "Najstarsze"),
+    deletedNewest: t("Recently deleted first", "Спочатку нещодавно видалені", "Ostatnio usunięte"),
+    deletedOldest: t("Oldest deletions first", "Спочатку давні видалення", "Najdawniej usunięte"),
     name: t("Name A–Z", "Ім’я А–Я", "Nazwa A–Z"),
     apply: t("Apply filters", "Застосувати фільтри", "Zastosuj filtry"),
     loading: t("Loading users…", "Завантаження користувачів…", "Wczytywanie użytkowników…"),
@@ -706,6 +739,7 @@ function getLabels(locale: Locale) {
     admin: t("Admin", "Адмін", "Admin"),
     restriction: t("Active restriction", "Активне обмеження", "Aktywne ograniczenie"),
     created: t("Created", "Створено", "Utworzono"),
+    deletedAt: t("Deleted", "Видалено", "Usunięto"),
     sessions: t("Active sessions", "Активні сесії", "Aktywne sesje"),
     loginMethods: t("Login", "Вхід", "Logowanie"),
     completedCollaboration: t(

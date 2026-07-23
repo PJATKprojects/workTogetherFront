@@ -4,6 +4,8 @@ import { notFound } from "next/navigation";
 import { LocaleHtmlAttributes } from "@/components/locale-html-attributes";
 import { MfaStepUpDialog } from "@/components/mfa-step-up-dialog";
 import { PwaRegistrar } from "@/components/pwa-registrar";
+import { PrivacyConsentBanner } from "@/components/privacy-consent-banner";
+import { DeviceAnalyticsTracker } from "@/components/device-analytics-tracker";
 import { AmbientBackground } from "@/components/ui/ambient-background";
 import { ScrollParallaxDriver } from "@/components/ui/scroll-parallax-driver";
 import { getMessages } from "@/i18n/config";
@@ -47,6 +49,8 @@ export default async function LocaleLayout({ children, params }: Props) {
       <AmbientBackground />
       <MfaStepUpDialog locale={raw} />
       <PwaRegistrar locale={raw} />
+      <DeviceAnalyticsTracker />
+      <PrivacyConsentBanner locale={raw} />
       {children}
     </>
   );

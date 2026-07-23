@@ -260,6 +260,8 @@ export const pl: SiteMessages = {
     resend: "Wyślij potwierdzenie ponownie",
     resending: "Wysyłanie…",
     resent: "Jeśli konto nadal wymaga potwierdzenia, wysłaliśmy nową wiadomość.",
+    spamHint:
+      "Wiadomość potwierdzająca może trafić do Spamu, Niechcianych lub Ofert. Jeśli po kilku minutach nie ma jej w odebranych, sprawdź te foldery i oznacz wiadomość jako niebędącą spamem.",
     emailPlaceholder: "Email użyty podczas rejestracji",
     login: "Przejdź do logowania",
   },
@@ -759,7 +761,7 @@ export const pl: SiteMessages = {
     metaDescription:
       "Zasady korzystania z WorkTogether: konta, projekty, zgłoszenia, bezpieczeństwo i odpowiedzialność.",
     title: "Regulamin",
-    updated: "22 lipca 2026",
+    updated: "23 lipca 2026",
     intro:
       "Niniejszy Regulamin określa zasady korzystania z WorkTogether — platformy do publikowania projektów, szukania osób i dołączania do zespołów. Utworzenie konta lub dalsze korzystanie z usługi oznacza akceptację Regulaminu.",
     sections: [
@@ -857,7 +859,7 @@ export const pl: SiteMessages = {
           "Konto: nazwa, email, data urodzenia, język, skrót hasła, dostawcy OAuth, klucze dostępu, MFA i sesje.",
           "Profil i onboarding: rola, umiejętności z poziomem, strefa czasowa, języki, dostępność, format, cel i data startu.",
           "Aktywność: projekty, role, zgłoszenia, wiadomości, powiadomienia, zgłoszenia bezpieczeństwa i historia decyzji.",
-          "Dane techniczne: adres IP, przybliżony region, user agent, logi bezpieczeństwa oraz identyfikatory push.",
+          "Dane techniczne: adres IP, przybliżony region, user agent, logi bezpieczeństwa oraz identyfikatory push. Po zgodzie na anonimową analitykę zapisujemy dodatkowo czas wizyty i ogólne kategorie urządzenia, systemu oraz przeglądarki bez IP, pełnego user agenta ani ID konta.",
         ],
       },
       {
@@ -874,8 +876,8 @@ export const pl: SiteMessages = {
         ],
         bullets: [
           "Wykonanie umowy: konto, projekty, matching, zgłoszenia, zespół i komunikacja.",
-          "Uzasadniony interes: bezpieczeństwo, zapobieganie spamowi, niezawodność i podstawowa analityka produktu.",
-          "Zgoda: opcjonalne importy, push i opcjonalne wiadomości marketingowe lub digest.",
+          "Uzasadniony interes: bezpieczeństwo, zapobieganie spamowi i niezawodność.",
+          "Zgoda: anonimowa analityka urządzeń, opcjonalne importy, push i opcjonalne wiadomości marketingowe lub digest.",
           "Obowiązek prawny: obsługa uzasadnionych żądań i zachowanie wymaganych zapisów.",
         ],
       },
@@ -884,6 +886,7 @@ export const pl: SiteMessages = {
         body: [
           "Publiczny profil i opublikowane projekty są widoczne dla innych. Email, data urodzenia, aktywne sesje, kody MFA, prywatne wiadomości i szkice nie są publiczne.",
           "Pamięć localStorage przeglądarki przechowuje motyw oraz wersjonowane, niewysłane szkice projektu, zgłoszenia i wiadomości maksymalnie przez 30 dni. Szkic jest usuwany po udanym wysłaniu albo świadomym odrzuceniu. Załączniki nie są tam zapisywane i trzeba wybrać je ponownie; tokeny dostępu i odświeżania również nie trafiają do localStorage ani sessionStorage.",
+          "wt_privacy_choice_v1 w localStorage zapisuje zgodę lub odmowę opcjonalnej analityki, wersję polityki i czas wyboru. Po zgodzie sessionStorage przechowuje tylko znacznik, że bieżąca sesja przeglądarki została już policzona.",
           "Zablokowanie użytkownika ogranicza wzajemny profil, wiadomości i zaproszenia.",
         ],
       },
@@ -898,6 +901,7 @@ export const pl: SiteMessages = {
         body: [
           "Dane aktywnego konta przechowujemy przez okres korzystania z usługi. Po zaplanowaniu usunięcia obowiązuje okres ochronny, a następnie dane są usuwane lub anonimizowane, chyba że prawo lub bezpieczeństwo wymagają dłuższej retencji.",
           "Historia projektu, wkład zespołu i decyzje mogą zostać zachowane w zminimalizowanej lub zanonimizowanej formie, aby nie naruszyć praw innych członków.",
+          "Anonimowe zdarzenia analityki urządzeń przechowujemy maksymalnie przez 180 dni.",
         ],
       },
       {

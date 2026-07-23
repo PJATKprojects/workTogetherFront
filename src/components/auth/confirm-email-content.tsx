@@ -75,6 +75,16 @@ export function ConfirmEmailContent({
         >
           {message}
         </p>
+        {registered || resent ? (
+          <aside className="mx-auto mt-4 max-w-lg rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4 text-left text-sm leading-6 text-amber-900 dark:text-amber-100">
+            <p className="flex gap-2">
+              <span aria-hidden className="mt-0.5 shrink-0">
+                ✉
+              </span>
+              <span>{labels.spamHint}</span>
+            </p>
+          </aside>
+        ) : null}
         {token && (state === "ready" || state === "confirming") ? (
           <button
             type="button"
