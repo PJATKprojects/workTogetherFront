@@ -458,7 +458,17 @@ function UserCard({
               {user.isAdmin ? <Pill tone="warn">{labels.admin}</Pill> : null}
               {user.isCurrentUser ? <Pill tone="neutral">{labels.currentAccount}</Pill> : null}
             </div>
-            <p className="mt-1 truncate text-sm text-muted-foreground">{user.email}</p>
+            {!deleted ? (
+              <p className="mt-1 text-sm text-muted-foreground">
+                <span className="font-medium text-foreground">{labels.emailAddress}: </span>
+                <a
+                  href={`mailto:${user.email}`}
+                  className="focus-ring break-all rounded-sm text-primary-text underline-offset-4 hover:underline"
+                >
+                  {user.email}
+                </a>
+              </p>
+            ) : null}
             <div className="mt-3 flex flex-wrap gap-2">
               {badges.map((badge) => (
                 <Pill key={badge} tone="neutral">
@@ -737,6 +747,7 @@ function getLabels(locale: Locale) {
     ),
     currentAccount: t("Your account", "Ваш обліковий запис", "Twoje konto"),
     admin: t("Admin", "Адмін", "Admin"),
+    emailAddress: t("Email address", "Адреса email", "Adres e-mail"),
     restriction: t("Active restriction", "Активне обмеження", "Aktywne ograniczenie"),
     created: t("Created", "Створено", "Utworzono"),
     deletedAt: t("Deleted", "Видалено", "Usunięto"),

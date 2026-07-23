@@ -308,7 +308,7 @@ export async function installApiMock(page: Page, options: MockOptions = {}): Pro
       {
         id: 42,
         userName: "Sam Teammate",
-        email: "s***m@example.test",
+        email: "sam@example.test",
         isActive: true,
         isConfirmed: true,
         isAdmin: false,
@@ -327,7 +327,7 @@ export async function installApiMock(page: Page, options: MockOptions = {}): Pro
       {
         id: 77,
         userName: "Deleted user",
-        email: "d***7@invalid.local",
+        email: "deleted+77@invalid.local",
         isActive: false,
         isConfirmed: false,
         isAdmin: false,
@@ -647,7 +647,7 @@ export async function installApiMock(page: Page, options: MockOptions = {}): Pro
       });
       Object.assign(user, {
         userName: "Deleted user",
-        email: `d***d@invalid.local`,
+        email: `deleted+${userId}@invalid.local`,
         isActive: false,
         isAdmin: false,
         activeRestriction: null,
